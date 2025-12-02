@@ -1,27 +1,43 @@
 @file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 package com.mbongo.app.ui.screens.loans
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.mbongo.app.data.local.entity.Loan
+import com.mbongo.app.data.local.entity.Repayment
 import com.mbongo.app.ui.viewmodel.LoansViewModel
 import com.mbongo.app.ui.components.CopyrightFooter
+import com.mbongo.app.ui.components.formatCurrency
 import java.text.SimpleDateFormat
 import java.util.*
+
+data class LoanBreakdown(
+    val totalInterest: Double,
+    val interestRemaining: Double,
+    val principalRemaining: Double,
+    val interestPaid: Double,
+    val principalPaid: Double,
+    val totalDue: Double,
+    val progress: Float
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,6 +49,7 @@ fun LoansScreen(
     val totalLoanAmount by viewModel.totalLoanAmount.collectAsState()
     val totalRemainingAmount by viewModel.totalRemainingAmount.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    var showRepaymentDialog by remember { mutableStateOf<Loan?>(null) }
 
     Scaffold(
         floatingActionButton = {
@@ -84,7 +101,7 @@ fun LoansScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "${String.format("%,.0f", totalLoanAmount)} F",
+                            text = formatCurrency(totalLoanAmount),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold
@@ -110,7 +127,7 @@ fun LoansScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "${String.format("%,.0f", totalRemainingAmount)} F",
+                            text = formatCurrency(totalRemainingAmount),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.error,
                             fontWeight = FontWeight.Bold
@@ -121,8 +138,18 @@ fun LoansScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Loans List
-            if (loans.isEmpty()) {
+            // Loans List - Filtrer les prêts actifs
+            val activeLoans = loans.filter { loan ->
+                val breakdown = calculateLoanBreakdown(loan)
+                (breakdown.interestRemaining + breakdown.principalRemaining) > 0
+            }
+            
+            val paidLoans = loans.filter { loan ->
+                val breakdown = calculateLoanBreakdown(loan)
+                (breakdown.interestRemaining + breakdown.principalRemaining) <= 0
+            }
+
+            if (activeLoans.isEmpty() && paidLoans.isEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -158,28 +185,61 @@ fun LoansScreen(
                         }
                     }
                 }
+                
+                Spacer(modifier = Modifier.weight(1f))
+                CopyrightFooter()
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(loans) { loan ->
-                        LoanItem(
-                            loan = loan,
-                            onDelete = { viewModel.deleteLoan(loan) }
-                        )
+                    // Prêts actifs
+                    if (activeLoans.isNotEmpty()) {
+                        item {
+                            Text(
+                                text = "Prêts en cours (${activeLoans.size})",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        
+                        items(activeLoans) { loan ->
+                            LoanItemEnhanced(
+                                loan = loan,
+                                breakdown = calculateLoanBreakdown(loan),
+                                onDelete = { viewModel.deleteLoan(loan) },
+                                onRepay = { showRepaymentDialog = loan }
+                            )
+                        }
                     }
                     
-                    // Copyright Footer
+                    // Prêts soldés
+                    if (paidLoans.isNotEmpty()) {
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Prêts soldés (${paidLoans.size})",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = Color(0xFF10B981),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        
+                        items(paidLoans) { loan ->
+                            LoanItemEnhanced(
+                                loan = loan,
+                                breakdown = calculateLoanBreakdown(loan),
+                                onDelete = { viewModel.deleteLoan(loan) },
+                                onRepay = null,
+                                isPaid = true
+                            )
+                        }
+                    }
+                    
                     item {
                         CopyrightFooter()
                     }
                 }
-            }
-            
-            // Copyright Footer si liste vide
-            if (loans.isEmpty()) {
-                Spacer(modifier = Modifier.weight(1f))
-                CopyrightFooter()
             }
         }
 
@@ -192,25 +252,74 @@ fun LoansScreen(
                 }
             )
         }
+        
+        showRepaymentDialog?.let { loan ->
+            RepaymentDialog(
+                loan = loan,
+                breakdown = calculateLoanBreakdown(loan),
+                onDismiss = { showRepaymentDialog = null },
+                onConfirm = { interestAmount, principalAmount ->
+                    viewModel.addRepayment(
+                        loan = loan,
+                        interestAmount = interestAmount,
+                        principalAmount = principalAmount
+                    )
+                    showRepaymentDialog = null
+                }
+            )
+        }
     }
 }
 
+fun calculateLoanBreakdown(loan: Loan): LoanBreakdown {
+    val principal = loan.principal
+    val interestRate = loan.interestRate
+    val totalInterest = principal * (interestRate / 100)
+    val totalDue = principal + totalInterest
+    
+    // TODO: Récupérer les vrais remboursements depuis la DB
+    val interestPaid = 0.0
+    val principalPaid = 0.0
+    
+    val interestRemaining = (totalInterest - interestPaid).coerceAtLeast(0.0)
+    val principalRemaining = (principal - principalPaid).coerceAtLeast(0.0)
+    
+    val totalPaid = interestPaid + principalPaid
+    val progress = if (totalDue > 0) (totalPaid / totalDue).toFloat().coerceIn(0f, 1f) else 0f
+    
+    return LoanBreakdown(
+        totalInterest = totalInterest,
+        interestRemaining = interestRemaining,
+        principalRemaining = principalRemaining,
+        interestPaid = interestPaid,
+        principalPaid = principalPaid,
+        totalDue = totalDue,
+        progress = progress
+    )
+}
+
 @Composable
-fun LoanItem(
+fun LoanItemEnhanced(
     loan: Loan,
-    onDelete: () -> Unit
+    breakdown: LoanBreakdown,
+    onDelete: () -> Unit,
+    onRepay: (() -> Unit)?,
+    isPaid: Boolean = false
 ) {
-    val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+    var showDetails by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    val progress = 0.5f // Placeholder since we don't have repayment tracking yet
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { },
+            .clickable { showDetails = !showDetails },
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+            containerColor = if (isPaid) 
+                Color(0xFF10B981).copy(alpha = 0.1f) 
+            else 
+                MaterialTheme.colorScheme.surface
+        ),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Column(
             modifier = Modifier
@@ -230,13 +339,14 @@ fun LoanItem(
                     Surface(
                         modifier = Modifier.size(48.dp),
                         shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primaryContainer
+                        color = if (isPaid) Color(0xFF10B981).copy(alpha = 0.2f) 
+                               else MaterialTheme.colorScheme.primaryContainer
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
-                                imageVector = Icons.Default.AccountBalance,
+                                imageVector = if (isPaid) Icons.Default.CheckCircle else Icons.Default.AccountBalance,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = if (isPaid) Color(0xFF10B981) else MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -244,57 +354,102 @@ fun LoanItem(
 
                     Column {
                         Text(
-                            text = loan.lender ?: "Prêt",
-                            style = MaterialTheme.typography.bodyLarge,
+                            text = formatCurrency(breakdown.totalDue),
+                            style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = loan.startDate,
+                            text = loan.purpose ?: loan.lender ?: "Prêt",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
-                IconButton(onClick = { showDeleteDialog = true }) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Supprimer",
-                        tint = MaterialTheme.colorScheme.error
-                    )
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    IconButton(onClick = { showDetails = !showDetails }, modifier = Modifier.size(36.dp)) {
+                        Icon(
+                            imageVector = if (showDetails) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = "Détails",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    
+                    if (onRepay != null) {
+                        IconButton(onClick = onRepay, modifier = Modifier.size(36.dp)) {
+                            Icon(Icons.Default.Payment, contentDescription = "Rembourser", tint = Color(0xFF10B981))
+                        }
+                    }
+                    
+                    IconButton(onClick = { showDeleteDialog = true }, modifier = Modifier.size(36.dp)) {
+                        Icon(Icons.Default.Delete, contentDescription = "Supprimer", tint = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "${String.format("%,.0f", loan.principal * 0.5)} F restant",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = "${String.format("%,.0f", loan.principal)} F",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            AnimatedVisibility(visible = showDetails) {
+                Column(modifier = Modifier.padding(top = 12.dp)) {
+                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    
+                    Text(
+                        text = "Capital: ${formatCurrency(loan.principal)} + Intérêts: ${formatCurrency(breakdown.totalInterest)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Text(
+                        text = "Taux: ${String.format("%.2f", loan.interestRate)}% · Durée: ${loan.termMonths} mois",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("🏦 Intérêts:", style = MaterialTheme.typography.bodySmall)
+                                Text("${formatCurrency(breakdown.interestPaid)} / ${formatCurrency(breakdown.totalInterest)}", style = MaterialTheme.typography.bodySmall)
+                            }
+                            Text("Restant: ${formatCurrency(breakdown.interestRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
+                            
+                            Spacer(modifier = Modifier.height(4.dp))
+                            
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("💰 Capital:", style = MaterialTheme.typography.bodySmall)
+                                Text("${formatCurrency(breakdown.principalPaid)} / ${formatCurrency(loan.principal)}", style = MaterialTheme.typography.bodySmall)
+                            }
+                            Text("Restant: ${formatCurrency(breakdown.principalRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
+                        }
+                    }
+                }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            LinearProgressIndicator(
-                progress = progress,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp),
-                color = MaterialTheme.colorScheme.tertiary,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+            if (!isPaid) {
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(
+                        text = "Restant: ${formatCurrency(breakdown.interestRemaining + breakdown.principalRemaining)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFFEF4444),
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text("${(breakdown.progress * 100).toInt()}%", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                LinearProgressIndicator(
+                    progress = { breakdown.progress },
+                    modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+                    color = Color(0xFF10B981),
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            }
         }
     }
 
@@ -302,111 +457,131 @@ fun LoanItem(
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("Confirmer la suppression") },
-            text = { Text("Voulez-vous vraiment supprimer ce prêt ?") },
+            text = { Text("Voulez-vous vraiment supprimer ce prêt et tous ses remboursements ?") },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        onDelete()
-                        showDeleteDialog = false
-                    }
-                ) {
+                TextButton(onClick = { onDelete(); showDeleteDialog = false }) {
                     Text("Supprimer", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Annuler")
-                }
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Annuler") }
             }
         )
     }
 }
 
 @Composable
-fun AddLoanDialog(
+fun RepaymentDialog(
+    loan: Loan,
+    breakdown: LoanBreakdown,
     onDismiss: () -> Unit,
-    onConfirm: (Loan) -> Unit
+    onConfirm: (interestAmount: Double, principalAmount: Double) -> Unit
 ) {
-    var lenderName by remember { mutableStateOf("") }
-    var principal by remember { mutableStateOf("") }
-    var interestRate by remember { mutableStateOf("") }
-    var termMonths by remember { mutableStateOf("") }
-    var purpose by remember { mutableStateOf("") }
+    var interestAmount by remember { mutableStateOf("") }
+    var principalAmount by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Nouveau prêt") },
+        title = { Text("Remboursement - ${loan.purpose ?: loan.lender ?: "Prêt"}") },
         text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text("Informations du prêt :", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                        Text("Capital: ${formatCurrency(loan.principal)} · Intérêt: ${loan.interestRate}%", style = MaterialTheme.typography.bodySmall)
+                        Text("Intérêts restants: ${formatCurrency(breakdown.interestRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
+                        Text("Capital restant: ${formatCurrency(breakdown.principalRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
+                    }
+                }
+                
+                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFD4AF37).copy(alpha = 0.1f))) {
+                    Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("💡")
+                        Text("Ce remboursement sera enregistré comme une dépense.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF856404))
+                    }
+                }
+                
                 OutlinedTextField(
-                    value = lenderName,
-                    onValueChange = { lenderName = it },
-                    label = { Text("Nom du prêteur") },
+                    value = interestAmount,
+                    onValueChange = { interestAmount = it },
+                    label = { Text("Intérêts (max ${formatCurrency(breakdown.interestRemaining)})") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-
+                
                 OutlinedTextField(
-                    value = principal,
-                    onValueChange = { principal = it },
-                    label = { Text("Montant principal (FCFA)") },
+                    value = principalAmount,
+                    onValueChange = { principalAmount = it },
+                    label = { Text("Capital (max ${formatCurrency(breakdown.principalRemaining)})") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-
-                OutlinedTextField(
-                    value = interestRate,
-                    onValueChange = { interestRate = it },
-                    label = { Text("Taux d'intérêt (%)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                OutlinedTextField(
-                    value = termMonths,
-                    onValueChange = { termMonths = it },
-                    label = { Text("Durée (mois)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                OutlinedTextField(
-                    value = purpose,
-                    onValueChange = { purpose = it },
-                    label = { Text("Objet du prêt (optionnel)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                
+                val interest = interestAmount.toDoubleOrNull() ?: 0.0
+                val principal = principalAmount.toDoubleOrNull() ?: 0.0
+                val total = interest + principal
+                
+                if (total > 0) {
+                    Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF10B981).copy(alpha = 0.15f)), shape = RoundedCornerShape(8.dp)) {
+                        Column(Modifier.padding(12.dp)) {
+                            Text("Récapitulatif :", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
+                            Text("Intérêts: ${formatCurrency(interest)}", style = MaterialTheme.typography.bodySmall)
+                            Text("Capital: ${formatCurrency(principal)}", style = MaterialTheme.typography.bodySmall)
+                            Text("Total: ${formatCurrency(total)}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (lenderName.isNotBlank() && principal.isNotBlank()) {
-                        val principalAmount = principal.toDoubleOrNull() ?: 0.0
-                        onConfirm(
-                            Loan(
-                                principal = principalAmount,
-                                interestRate = interestRate.toDoubleOrNull() ?: 0.0,
-                                termMonths = termMonths.toIntOrNull() ?: 0,
-                                startDate = java.text.SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(java.util.Date()),
-                                lender = lenderName,
-                                purpose = purpose.ifBlank { null }
-                            )
-                        )
-                    }
+                    val interest = interestAmount.toDoubleOrNull() ?: 0.0
+                    val principal = principalAmount.toDoubleOrNull() ?: 0.0
+                    if (interest + principal > 0) onConfirm(interest, principal)
                 },
-                enabled = lenderName.isNotBlank() && principal.isNotBlank()
-            ) {
-                Text("Ajouter")
+                enabled = (interestAmount.toDoubleOrNull() ?: 0.0) + (principalAmount.toDoubleOrNull() ?: 0.0) > 0
+            ) { Text("Confirmer") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler") } }
+    )
+}
+
+@Composable
+fun AddLoanDialog(onDismiss: () -> Unit, onConfirm: (Loan) -> Unit) {
+    var description by remember { mutableStateOf("") }
+    var principal by remember { mutableStateOf("") }
+    var interestRate by remember { mutableStateOf("0") }
+    var termMonths by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Nouveau prêt") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(value = principal, onValueChange = { principal = it }, label = { Text("Montant principal (FCFA)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                OutlinedTextField(value = interestRate, onValueChange = { interestRate = it }, label = { Text("Taux d'intérêt (%)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                OutlinedTextField(value = termMonths, onValueChange = { termMonths = it }, label = { Text("Durée (mois)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Description") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Annuler")
-            }
-        }
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (principal.isNotBlank()) {
+                        onConfirm(Loan(
+                            principal = principal.toDoubleOrNull() ?: 0.0,
+                            interestRate = interestRate.toDoubleOrNull() ?: 0.0,
+                            termMonths = termMonths.toIntOrNull() ?: 0,
+                            startDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
+                            lender = null,
+                            purpose = description.ifBlank { null }
+                        ))
+                    }
+                },
+                enabled = principal.isNotBlank()
+            ) { Text("Créer") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler") } }
     )
 }

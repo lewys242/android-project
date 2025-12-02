@@ -1,6 +1,8 @@
 package com.mbongo.app.data.repository
 
 import com.mbongo.app.data.local.dao.ExpenseDao
+import com.mbongo.app.data.local.dao.CategoryExpenseTotal
+import com.mbongo.app.data.local.dao.MonthlyTotal
 import com.mbongo.app.data.local.entity.Expense
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -26,6 +28,8 @@ class ExpenseRepository @Inject constructor(
     
     suspend fun getTotalExpensesByMonth(month: String): Double = expenseDao.getTotalExpensesByMonth(month)
     
+    suspend fun getTotalExpensesByYear(year: String): Double = expenseDao.getTotalExpensesByYear(year)
+    
     suspend fun getExpenseById(id: Long): Expense? = expenseDao.getExpenseById(id)
     
     suspend fun insertExpense(expense: Expense): Long = expenseDao.insertExpense(expense)
@@ -33,4 +37,13 @@ class ExpenseRepository @Inject constructor(
     suspend fun updateExpense(expense: Expense) = expenseDao.updateExpense(expense)
     
     suspend fun deleteExpense(expense: Expense) = expenseDao.deleteExpense(expense)
+    
+    suspend fun getExpensesByCategoryForMonth(month: String): List<CategoryExpenseTotal> =
+        expenseDao.getExpensesByCategoryForMonth(month)
+    
+    suspend fun getExpensesByCategoryForYear(year: String): List<CategoryExpenseTotal> =
+        expenseDao.getExpensesByCategoryForYear(year)
+    
+    suspend fun getMonthlyTotalsForYear(year: String): List<MonthlyTotal> =
+        expenseDao.getMonthlyTotalsForYear(year)
 }

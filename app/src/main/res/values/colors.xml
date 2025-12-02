@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF1A1A1A</color>
+    <color name="dark_gray">#FF2A2A2A</color>
+    <color name="medium_gray">#FF3A3A3A</color>
+    <color name="light_gray">#FFCCCCCC</color>
+    <color name="gold">#FFD4AF37</color>
+    <color name="light_gold">#FFFFED4E</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <color name="success">#FF10B981</color>
+    <color name="error">#FFEF4444</color>
+    <color name="warning">#FFFBBF24</color>
+    <color name="info">#FF3B82F6</color>
+    
+    <color name="ic_launcher_background">#FFD4AF37</color>
+</resources>

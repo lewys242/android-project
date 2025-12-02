@@ -1,0 +1,30 @@
+package com.mbongo.app.ui.theme
+
+import androidx.compose.ui.graphics.Color
+
+// Theme principale - Noir et Or
+val Black = Color(0xFF1A1A1A)
+val DarkGray = Color(0xFF2A2A2A)
+val MediumGray = Color(0xFF3A3A3A)
+val LightGray = Color(0xFFCCCCCC)
+val Gold = Color(0xFFD4AF37)
+val LightGold = Color(0xFFFFED4E)
+val White = Color(0xFFFFFFFF)
+
+// Couleurs fonctionnelles
+val Success = Color(0xFF10B981)
+val Error = Color(0xFFEF4444)
+val Warning = Color(0xFFFBBF24)
+val Info = Color(0xFF3B82F6)
+
+// Couleurs pour les catégories (matching web version)
+val CategoryColors = mapOf(
+    "Alimentation" to Color(0xFF10B981),
+    "Transport" to Color(0xFF3B82F6),
+    "Logement" to Color(0xFF8B5CF6),
+    "Santé" to Color(0xFFEF4444),
+    "Loisirs" to Color(0xFFF59E0B),
+    "Éducation" to Color(0xFF06B6D4),
+    "Vêtements" to Color(0xFFEC4899),
+    "Autres" to Color(0xFF6B7280)
+)

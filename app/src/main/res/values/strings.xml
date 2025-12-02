@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mbongo</string>
+    
+    <!-- Bottom Navigation -->
+    <string name="nav_dashboard">Tableau de bord</string>
+    <string name="nav_expenses">Dépenses</string>
+    <string name="nav_incomes">Revenus</string>
+    <string name="nav_budgets">Budgets</string>
+    <string name="nav_loans">Prêts</string>
+    <string name="nav_stats">Statistiques</string>
+    
+    <!-- Dashboard -->
+    <string name="dashboard_title">Tableau de bord</string>
+    <string name="balance">Solde</string>
+    <string name="total_income">Revenus totaux</string>
+    <string name="total_expenses">Dépenses totales</string>
+    <string name="savings">Épargne</string>
+    <string name="recent_transactions">Transactions récentes</string>
+    
+    <!-- Expenses -->
+    <string name="expenses_title">Dépenses</string>
+    <string name="add_expense">Ajouter une dépense</string>
+    <string name="edit_expense">Modifier la dépense</string>
+    <string name="delete_expense">Supprimer la dépense</string>
+    <string name="expense_amount">Montant</string>
+    <string name="expense_category">Catégorie</string>
+    <string name="expense_description">Description</string>
+    <string name="expense_date">Date</string>
+    <string name="no_expenses">Aucune dépense enregistrée</string>
+    
+    <!-- Incomes -->
+    <string name="incomes_title">Revenus</string>
+    <string name="add_income">Ajouter un revenu</string>
+    <string name="edit_income">Modifier le revenu</string>
+    <string name="delete_income">Supprimer le revenu</string>
+    <string name="income_amount">Montant</string>
+    <string name="income_description">Description</string>
+    <string name="income_month">Mois</string>
+    <string name="no_incomes">Aucun revenu enregistré</string>
+    
+    <!-- Budgets -->
+    <string name="budgets_title">Budgets</string>
+    <string name="add_budget">Ajouter un budget</string>
+    <string name="edit_budget">Modifier le budget</string>
+    <string name="delete_budget">Supprimer le budget</string>
+    <string name="budget_amount">Montant du budget</string>
+    <string name="budget_remaining">Restant</string>
+    <string name="budget_exceeded">Dépassé</string>
+    <string name="no_budgets">Aucun budget défini</string>
+    
+    <!-- Loans -->
+    <string name="loans_title">Prêts</string>
+    <string name="add_loan">Ajouter un prêt</string>
+    <string name="edit_loan">Modifier le prêt</string>
+    <string name="delete_loan">Supprimer le prêt</string>
+    <string name="loan_principal">Montant principal</string>
+    <string name="loan_interest">Taux d\'intérêt</string>
+    <string name="loan_term">Durée (mois)</string>
+    <string name="loan_lender">Prêteur</string>
+    <string name="loan_purpose">Objectif</string>
+    <string name="loan_remaining">Solde restant</string>
+    <string name="add_repayment">Ajouter un remboursement</string>
+    <string name="no_loans">Aucun prêt enregistré</string>
+    
+    <!-- Statistics -->
+    <string name="stats_title">Statistiques</string>
+    <string name="monthly_view">Vue mensuelle</string>
+    <string name="yearly_view">Vue annuelle</string>
+    <string name="by_category">Par catégorie</string>
+    <string name="trend">Tendance</string>
+    
+    <!-- Categories -->
+    <string name="categories_title">Catégories</string>
+    <string name="add_category">Ajouter une catégorie</string>
+    <string name="edit_category">Modifier la catégorie</string>
+    <string name="delete_category">Supprimer la catégorie</string>
+    <string name="category_name">Nom de la catégorie</string>
+    <string name="category_color">Couleur</string>
+    <string name="category_icon">Icône</string>
+    
+    <!-- Savings -->
+    <string name="savings_title">Épargne</string>
+    <string name="savings_enabled">Épargne activée</string>
+    <string name="savings_rate">Taux d\'épargne</string>
+    <string name="savings_total">Total épargné</string>
+    <string name="savings_goal">Objectif</string>
+    
+    <!-- Common -->
+    <string name="save">Enregistrer</string>
+    <string name="cancel">Annuler</string>
+    <string name="delete">Supprimer</string>
+    <string name="edit">Modifier</string>
+    <string name="confirm">Confirmer</string>
+    <string name="search">Rechercher</string>
+    <string name="filter">Filtrer</string>
+    <string name="export">Exporter</string>
+    <string name="settings">Paramètres</string>
+    
+    <!-- Filters -->
+    <string name="filter_all">Tout</string>
+    <string name="filter_month">Ce mois</string>
+    <string name="filter_year">Cette année</string>
+    <string name="select_category">Sélectionner une catégorie</string>
+    <string name="select_month">Sélectionner un mois</string>
+    <string name="select_year">Sélectionner une année</string>
+    
+    <!-- Currencies -->
+    <string name="currency_fcfa">FCFA</string>
+    <string name="currency_eur">EUR</string>
+    <string name="currency_usd">USD</string>
+    
+    <!-- Months -->
+    <string name="january">Janvier</string>
+    <string name="february">Février</string>
+    <string name="march">Mars</string>
+    <string name="april">Avril</string>
+    <string name="may">Mai</string>
+    <string name="june">Juin</string>
+    <string name="july">Juillet</string>
+    <string name="august">Août</string>
+    <string name="september">Septembre</string>
+    <string name="october">Octobre</string>
+    <string name="november">Novembre</string>
+    <string name="december">Décembre</string>
+    
+    <!-- Error Messages -->
+    <string name="error_required_field">Ce champ est requis</string>
+    <string name="error_invalid_amount">Montant invalide</string>
+    <string name="error_loading_data">Erreur lors du chargement des données</string>
+    <string name="error_saving_data">Erreur lors de l\'enregistrement</string>
+    <string name="error_deleting_data">Erreur lors de la suppression</string>
+    
+    <!-- Success Messages -->
+    <string name="success_saved">Enregistré avec succès</string>
+    <string name="success_deleted">Supprimé avec succès</string>
+    <string name="success_updated">Mis à jour avec succès</string>
+    
+    <!-- Confirmation -->
+    <string name="confirm_delete_title">Confirmer la suppression</string>
+    <string name="confirm_delete_message">Êtes-vous sûr de vouloir supprimer cet élément ?</string>
+</resources>

@@ -10,9 +10,8 @@ object ApiClient {
     // IMPORTANT: Changez cette URL selon votre configuration réseau
     // - Pour émulateur Android: "http://10.0.2.2:5000/api/"
     // - Pour appareil physique sur le même WiFi: "http://VOTRE_IP_PC:5000/api/"
-    // - Exemple: "http://192.168.1.100:5000/api/"
     
-    private const val BASE_URL = "http://10.0.2.2:5000/api/"
+    private const val BASE_URL = "http://172.16.40.68:5000/api/"
     
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

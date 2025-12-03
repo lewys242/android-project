@@ -444,7 +444,7 @@ fun LoanItemEnhanced(
                 Spacer(modifier = Modifier.height(4.dp))
                 
                 LinearProgressIndicator(
-                    progress = { breakdown.progress },
+                    progress = breakdown.progress,
                     modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
                     color = Color(0xFF10B981),
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
@@ -479,16 +479,36 @@ fun RepaymentDialog(
 ) {
     var interestAmount by remember { mutableStateOf("") }
     var principalAmount by remember { mutableStateOf("") }
+    
+    // Couleurs pour les champs de texte
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = Color(0xFF1E293B),
+        unfocusedTextColor = Color(0xFF1E293B),
+        cursorColor = Color(0xFF10B981),
+        focusedBorderColor = Color(0xFF10B981),
+        unfocusedBorderColor = Color(0xFFCBD5E1),
+        focusedLabelColor = Color(0xFF10B981),
+        unfocusedLabelColor = Color(0xFF64748B),
+        focusedContainerColor = Color.White,
+        unfocusedContainerColor = Color.White
+    )
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Remboursement - ${loan.purpose ?: loan.lender ?: "Prêt"}") },
+        containerColor = Color.White,
+        titleContentColor = Color(0xFF1E293B),
+        title = { 
+            Text(
+                "Remboursement - ${loan.purpose ?: loan.lender ?: "Prêt"}",
+                fontWeight = FontWeight.Bold
+            ) 
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9))) {
                     Column(Modifier.padding(12.dp)) {
-                        Text("Informations du prêt :", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                        Text("Capital: ${formatCurrency(loan.principal)} · Intérêt: ${loan.interestRate}%", style = MaterialTheme.typography.bodySmall)
+                        Text("Informations du prêt :", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+                        Text("Capital: ${formatCurrency(loan.principal)} · Intérêt: ${loan.interestRate}%", style = MaterialTheme.typography.bodySmall, color = Color(0xFF64748B))
                         Text("Intérêts restants: ${formatCurrency(breakdown.interestRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
                         Text("Capital restant: ${formatCurrency(breakdown.principalRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
                     }
@@ -506,7 +526,9 @@ fun RepaymentDialog(
                     onValueChange = { interestAmount = it },
                     label = { Text("Intérêts (max ${formatCurrency(breakdown.interestRemaining)})") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    colors = textFieldColors,
+                    shape = RoundedCornerShape(12.dp)
                 )
                 
                 OutlinedTextField(
@@ -514,7 +536,9 @@ fun RepaymentDialog(
                     onValueChange = { principalAmount = it },
                     label = { Text("Capital (max ${formatCurrency(breakdown.principalRemaining)})") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    colors = textFieldColors,
+                    shape = RoundedCornerShape(12.dp)
                 )
                 
                 val interest = interestAmount.toDoubleOrNull() ?: 0.0
@@ -525,8 +549,8 @@ fun RepaymentDialog(
                     Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF10B981).copy(alpha = 0.15f)), shape = RoundedCornerShape(8.dp)) {
                         Column(Modifier.padding(12.dp)) {
                             Text("Récapitulatif :", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
-                            Text("Intérêts: ${formatCurrency(interest)}", style = MaterialTheme.typography.bodySmall)
-                            Text("Capital: ${formatCurrency(principal)}", style = MaterialTheme.typography.bodySmall)
+                            Text("Intérêts: ${formatCurrency(interest)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFF1E293B))
+                            Text("Capital: ${formatCurrency(principal)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFF1E293B))
                             Text("Total: ${formatCurrency(total)}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
                         }
                     }
@@ -534,16 +558,21 @@ fun RepaymentDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            Button(
                 onClick = {
                     val interest = interestAmount.toDoubleOrNull() ?: 0.0
                     val principal = principalAmount.toDoubleOrNull() ?: 0.0
                     if (interest + principal > 0) onConfirm(interest, principal)
                 },
-                enabled = (interestAmount.toDoubleOrNull() ?: 0.0) + (principalAmount.toDoubleOrNull() ?: 0.0) > 0
+                enabled = (interestAmount.toDoubleOrNull() ?: 0.0) + (principalAmount.toDoubleOrNull() ?: 0.0) > 0,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF10B981),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(8.dp)
             ) { Text("Confirmer") }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler", color = Color(0xFF64748B)) } }
     )
 }
 
@@ -553,20 +582,72 @@ fun AddLoanDialog(onDismiss: () -> Unit, onConfirm: (Loan) -> Unit) {
     var principal by remember { mutableStateOf("") }
     var interestRate by remember { mutableStateOf("0") }
     var termMonths by remember { mutableStateOf("") }
+    
+    // Couleurs pour les champs de texte
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = Color(0xFF1E293B),
+        unfocusedTextColor = Color(0xFF1E293B),
+        cursorColor = Color(0xFF10B981),
+        focusedBorderColor = Color(0xFF10B981),
+        unfocusedBorderColor = Color(0xFFCBD5E1),
+        focusedLabelColor = Color(0xFF10B981),
+        unfocusedLabelColor = Color(0xFF64748B),
+        focusedContainerColor = Color.White,
+        unfocusedContainerColor = Color.White
+    )
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Nouveau prêt") },
+        containerColor = Color.White,
+        titleContentColor = Color(0xFF1E293B),
+        title = { 
+            Text(
+                "Nouveau prêt",
+                fontWeight = FontWeight.Bold
+            ) 
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(value = principal, onValueChange = { principal = it }, label = { Text("Montant principal (FCFA)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                OutlinedTextField(value = interestRate, onValueChange = { interestRate = it }, label = { Text("Taux d'intérêt (%)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                OutlinedTextField(value = termMonths, onValueChange = { termMonths = it }, label = { Text("Durée (mois)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Description") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                OutlinedTextField(
+                    value = principal, 
+                    onValueChange = { principal = it }, 
+                    label = { Text("Montant principal (FCFA)") }, 
+                    modifier = Modifier.fillMaxWidth(), 
+                    singleLine = true,
+                    colors = textFieldColors,
+                    shape = RoundedCornerShape(12.dp)
+                )
+                OutlinedTextField(
+                    value = interestRate, 
+                    onValueChange = { interestRate = it }, 
+                    label = { Text("Taux d'intérêt (%)") }, 
+                    modifier = Modifier.fillMaxWidth(), 
+                    singleLine = true,
+                    colors = textFieldColors,
+                    shape = RoundedCornerShape(12.dp)
+                )
+                OutlinedTextField(
+                    value = termMonths, 
+                    onValueChange = { termMonths = it }, 
+                    label = { Text("Durée (mois)") }, 
+                    modifier = Modifier.fillMaxWidth(), 
+                    singleLine = true,
+                    colors = textFieldColors,
+                    shape = RoundedCornerShape(12.dp)
+                )
+                OutlinedTextField(
+                    value = description, 
+                    onValueChange = { description = it }, 
+                    label = { Text("Description") }, 
+                    modifier = Modifier.fillMaxWidth(), 
+                    singleLine = true,
+                    colors = textFieldColors,
+                    shape = RoundedCornerShape(12.dp)
+                )
             }
         },
         confirmButton = {
-            TextButton(
+            Button(
                 onClick = {
                     if (principal.isNotBlank()) {
                         onConfirm(Loan(
@@ -579,9 +660,14 @@ fun AddLoanDialog(onDismiss: () -> Unit, onConfirm: (Loan) -> Unit) {
                         ))
                     }
                 },
-                enabled = principal.isNotBlank()
+                enabled = principal.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF10B981),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(8.dp)
             ) { Text("Créer") }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler", color = Color(0xFF64748B)) } }
     )
 }

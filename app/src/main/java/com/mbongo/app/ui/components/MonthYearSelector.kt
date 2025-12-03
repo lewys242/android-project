@@ -8,32 +8,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import java.text.SimpleDateFormat
-import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MonthYearSelector(
-    currentMonth: String, // Format: yyyy-MM
+    selectedMonth: Int,
+    selectedYear: Int,
     viewMode: String, // "month" ou "year"
-    onMonthChange: (String) -> Unit,
+    onMonthYearChange: (Int, Int) -> Unit,
     onViewModeChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val calendar = remember { Calendar.getInstance() }
-    
-    // Parser le mois actuel
-    val (year, month) = remember(currentMonth) {
-        try {
-            val parts = currentMonth.split("-")
-            Pair(parts[0].toInt(), parts[1].toInt())
-        } catch (e: Exception) {
-            Pair(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1)
-        }
-    }
-    
-    var selectedYear by remember { mutableStateOf(year) }
-    var selectedMonth by remember { mutableStateOf(month) }
+    var currentSelectedYear by remember(selectedYear) { mutableStateOf(selectedYear) }
+    var currentSelectedMonth by remember(selectedMonth) { mutableStateOf(selectedMonth) }
     var showYearDropdown by remember { mutableStateOf(false) }
     var showMonthDropdown by remember { mutableStateOf(false) }
     
@@ -98,7 +85,7 @@ fun MonthYearSelector(
                         modifier = Modifier.weight(1f)
                     ) {
                         OutlinedTextField(
-                            value = months[selectedMonth - 1],
+                            value = months[currentSelectedMonth - 1],
                             onValueChange = {},
                             readOnly = true,
                             label = { Text("Mois") },
@@ -113,9 +100,9 @@ fun MonthYearSelector(
                                 DropdownMenuItem(
                                     text = { Text(name) },
                                     onClick = {
-                                        selectedMonth = index + 1
+                                        currentSelectedMonth = index + 1
                                         showMonthDropdown = false
-                                        onMonthChange(String.format("%04d-%02d", selectedYear, selectedMonth))
+                                        onMonthYearChange(currentSelectedMonth, currentSelectedYear)
                                     }
                                 )
                             }
@@ -130,7 +117,7 @@ fun MonthYearSelector(
                     modifier = Modifier.weight(1f)
                 ) {
                     OutlinedTextField(
-                        value = selectedYear.toString(),
+                        value = currentSelectedYear.toString(),
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Année") },
@@ -145,9 +132,9 @@ fun MonthYearSelector(
                             DropdownMenuItem(
                                 text = { Text(yr.toString()) },
                                 onClick = {
-                                    selectedYear = yr
+                                    currentSelectedYear = yr
                                     showYearDropdown = false
-                                    onMonthChange(String.format("%04d-%02d", selectedYear, selectedMonth))
+                                    onMonthYearChange(currentSelectedMonth, currentSelectedYear)
                                 }
                             )
                         }

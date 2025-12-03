@@ -327,7 +327,7 @@ fun ManagementCard(
             
             // Barre de progression
             LinearProgressIndicator(
-                progress = { (usagePercent / 100f).coerceIn(0f, 1f) },
+                progress = (usagePercent / 100f).coerceIn(0f, 1f),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)

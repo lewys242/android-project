@@ -372,10 +372,30 @@ fun AddExpenseDialog(
     val categories by viewModel.categories.collectAsState()
     var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
     var expanded by remember { mutableStateOf(false) }
+    
+    // Couleurs pour les champs de texte
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = Color(0xFF1E293B),
+        unfocusedTextColor = Color(0xFF1E293B),
+        cursorColor = Color(0xFF10B981),
+        focusedBorderColor = Color(0xFF10B981),
+        unfocusedBorderColor = Color(0xFFCBD5E1),
+        focusedLabelColor = Color(0xFF10B981),
+        unfocusedLabelColor = Color(0xFF64748B),
+        focusedContainerColor = Color.White,
+        unfocusedContainerColor = Color.White
+    )
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Nouvelle dépense") },
+        containerColor = Color.White,
+        titleContentColor = Color(0xFF1E293B),
+        title = { 
+            Text(
+                "Nouvelle dépense",
+                fontWeight = FontWeight.Bold
+            ) 
+        },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -385,7 +405,9 @@ fun AddExpenseDialog(
                     onValueChange = { description = it },
                     label = { Text("Description") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    colors = textFieldColors,
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 OutlinedTextField(
@@ -393,7 +415,9 @@ fun AddExpenseDialog(
                     onValueChange = { amount = it },
                     label = { Text("Montant (FCFA)") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    colors = textFieldColors,
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 ExposedDropdownMenuBox(
@@ -408,7 +432,9 @@ fun AddExpenseDialog(
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor()
+                            .menuAnchor(),
+                        colors = textFieldColors,
+                        shape = RoundedCornerShape(12.dp)
                     )
                     ExposedDropdownMenu(
                         expanded = expanded,
@@ -416,7 +442,7 @@ fun AddExpenseDialog(
                     ) {
                         categories.forEach { category ->
                             DropdownMenuItem(
-                                text = { Text(category.name) },
+                                text = { Text(category.name, color = Color(0xFF1E293B)) },
                                 onClick = {
                                     selectedCategoryId = category.id
                                     expanded = false
@@ -428,7 +454,7 @@ fun AddExpenseDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            Button(
                 onClick = {
                     if (description.isNotBlank() && amount.isNotBlank() && selectedCategoryId != null) {
                         onConfirm(
@@ -441,14 +467,19 @@ fun AddExpenseDialog(
                         )
                     }
                 },
-                enabled = description.isNotBlank() && amount.isNotBlank() && selectedCategoryId != null
+                enabled = description.isNotBlank() && amount.isNotBlank() && selectedCategoryId != null,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF10B981),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(8.dp)
             ) {
                 Text("Ajouter")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler")
+                Text("Annuler", color = Color(0xFF64748B))
             }
         }
     )

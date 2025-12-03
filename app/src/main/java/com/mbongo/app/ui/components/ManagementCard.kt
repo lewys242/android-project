@@ -43,20 +43,22 @@ fun ManagementCard(
     var showPreviousMonth by remember { mutableStateOf(false) }
     
     // Couleurs et styles selon le niveau
-    val (backgroundColor, borderColor, emoji, title) = when (managementLevel) {
-        ManagementLevel.GOOD -> listOf(
+    data class ManagementStyle(val backgroundColor: Color, val borderColor: Color, val emoji: String, val title: String)
+    
+    val managementStyle = when (managementLevel) {
+        ManagementLevel.GOOD -> ManagementStyle(
             Color(0xFF10B981).copy(alpha = 0.1f),
             Color(0xFF10B981),
             "✅",
             "Bonne gestion"
         )
-        ManagementLevel.WARNING -> listOf(
+        ManagementLevel.WARNING -> ManagementStyle(
             Color(0xFFF59E0B).copy(alpha = 0.1f),
             Color(0xFFF59E0B),
             "⚠️",
             "Attention"
         )
-        ManagementLevel.BAD -> listOf(
+        ManagementLevel.BAD -> ManagementStyle(
             Color(0xFFEF4444).copy(alpha = 0.1f),
             Color(0xFFEF4444),
             "❌",
@@ -97,7 +99,7 @@ fun ManagementCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = backgroundColor as Color
+            containerColor = managementStyle.backgroundColor
         ),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -117,14 +119,14 @@ fun ManagementCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = emoji as String,
+                        text = managementStyle.emoji,
                         style = MaterialTheme.typography.headlineSmall
                     )
                     Column {
                         Text(
-                            text = title as String,
+                            text = managementStyle.title,
                             style = MaterialTheme.typography.titleMedium,
-                            color = borderColor as Color,
+                            color = managementStyle.borderColor,
                             fontWeight = FontWeight.Bold
                         )
                         if (!hasSalary) {
@@ -141,7 +143,7 @@ fun ManagementCard(
                 Text(
                     text = "$usagePercent%",
                     style = MaterialTheme.typography.headlineMedium,
-                    color = borderColor,
+                    color = managementStyle.borderColor,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -210,7 +212,7 @@ fun ManagementCard(
                 Button(
                     onClick = { showAdvice = !showAdvice },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = borderColor
+                        containerColor = managementStyle.borderColor
                     ),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
@@ -253,7 +255,7 @@ fun ManagementCard(
                             text = advice.title,
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
-                            color = borderColor
+                            color = managementStyle.borderColor
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         advice.tips.forEach { tip ->

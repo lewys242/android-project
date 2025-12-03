@@ -7,12 +7,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -311,10 +313,30 @@ fun AddIncomeDialog(
     val categories by viewModel.categories.collectAsState()
     var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
     var expanded by remember { mutableStateOf(false) }
+    
+    // Couleurs pour les champs de texte
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = Color(0xFF1E293B),
+        unfocusedTextColor = Color(0xFF1E293B),
+        cursorColor = Color(0xFF10B981),
+        focusedBorderColor = Color(0xFF10B981),
+        unfocusedBorderColor = Color(0xFFCBD5E1),
+        focusedLabelColor = Color(0xFF10B981),
+        unfocusedLabelColor = Color(0xFF64748B),
+        focusedContainerColor = Color.White,
+        unfocusedContainerColor = Color.White
+    )
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Nouveau revenu") },
+        containerColor = Color.White,
+        titleContentColor = Color(0xFF1E293B),
+        title = { 
+            Text(
+                "Nouveau revenu",
+                fontWeight = FontWeight.Bold
+            ) 
+        },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -323,7 +345,7 @@ fun AddIncomeDialog(
                 Text(
                     text = "Type de revenu",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color(0xFF64748B)
                 )
                 
                 Row(
@@ -333,21 +355,21 @@ fun AddIncomeDialog(
                     FilterChip(
                         selected = incomeType == "salary",
                         onClick = { incomeType = "salary" },
-                        label = { Text("💰 Salaire") },
+                        label = { Text("💰 Salaire", color = if (incomeType == "salary") Color(0xFF10B981) else Color(0xFF64748B)) },
                         modifier = Modifier.weight(1f),
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            selectedContainerColor = Color(0xFF10B981).copy(alpha = 0.15f),
+                            containerColor = Color(0xFFF1F5F9)
                         )
                     )
                     FilterChip(
                         selected = incomeType == "other",
                         onClick = { incomeType = "other" },
-                        label = { Text("💵 Autre") },
+                        label = { Text("💵 Autre", color = if (incomeType == "other") Color(0xFF667EEA) else Color(0xFF64748B)) },
                         modifier = Modifier.weight(1f),
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            selectedContainerColor = Color(0xFF667EEA).copy(alpha = 0.15f),
+                            containerColor = Color(0xFFF1F5F9)
                         )
                     )
                 }
@@ -357,7 +379,9 @@ fun AddIncomeDialog(
                     onValueChange = { description = it },
                     label = { Text(if (incomeType == "salary") "Source (ex: Employeur)" else "Description") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    colors = textFieldColors,
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 OutlinedTextField(
@@ -365,7 +389,9 @@ fun AddIncomeDialog(
                     onValueChange = { amount = it },
                     label = { Text("Montant (FCFA)") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    colors = textFieldColors,
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 ExposedDropdownMenuBox(
@@ -380,7 +406,9 @@ fun AddIncomeDialog(
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor()
+                            .menuAnchor(),
+                        colors = textFieldColors,
+                        shape = RoundedCornerShape(12.dp)
                     )
                     ExposedDropdownMenu(
                         expanded = expanded,
@@ -388,7 +416,7 @@ fun AddIncomeDialog(
                     ) {
                         categories.forEach { category ->
                             DropdownMenuItem(
-                                text = { Text(category.name) },
+                                text = { Text(category.name, color = Color(0xFF1E293B)) },
                                 onClick = {
                                     selectedCategoryId = category.id
                                     expanded = false
@@ -402,7 +430,7 @@ fun AddIncomeDialog(
                 if (incomeType == "salary") {
                     Card(
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                            containerColor = Color(0xFF10B981).copy(alpha = 0.1f)
                         )
                     ) {
                         Row(
@@ -414,7 +442,7 @@ fun AddIncomeDialog(
                             Text(
                                 text = "Le salaire est requis pour pouvoir enregistrer des dépenses ce mois.",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                color = Color(0xFF047857)
                             )
                         }
                     }
@@ -422,7 +450,7 @@ fun AddIncomeDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            Button(
                 onClick = {
                     if (description.isNotBlank() && amount.isNotBlank()) {
                             onConfirm(
@@ -436,14 +464,19 @@ fun AddIncomeDialog(
                             )
                         }
                 },
-                enabled = description.isNotBlank() && amount.isNotBlank() && selectedCategoryId != null
+                enabled = description.isNotBlank() && amount.isNotBlank() && selectedCategoryId != null,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF10B981),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(8.dp)
             ) {
                 Text("Ajouter")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler")
+                Text("Annuler", color = Color(0xFF64748B))
             }
         }
     )

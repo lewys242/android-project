@@ -113,7 +113,7 @@ fun StatisticsScreen(
                             color = Color(0xFFEF4444)
                         )
                         
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        Divider(color = MaterialTheme.colorScheme.outlineVariant)
                         
                         // Balance
                         StatRow(
@@ -131,7 +131,7 @@ fun StatisticsScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             LinearProgressIndicator(
-                                progress = { state.usedPercentage / 100f },
+                                progress = state.usedPercentage / 100f,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(8.dp)
@@ -411,7 +411,7 @@ fun CategoryStatItem(
         }
         
         LinearProgressIndicator(
-            progress = { percentage / 100f },
+            progress = percentage / 100f,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(6.dp)

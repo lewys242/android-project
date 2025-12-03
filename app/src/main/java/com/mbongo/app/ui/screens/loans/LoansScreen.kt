@@ -24,6 +24,7 @@ import androidx.navigation.NavController
 import com.mbongo.app.data.local.entity.Loan
 import com.mbongo.app.data.local.entity.Repayment
 import com.mbongo.app.ui.viewmodel.LoansViewModel
+import com.mbongo.app.ui.viewmodel.LoanDisplay
 import com.mbongo.app.ui.components.CopyrightFooter
 import com.mbongo.app.ui.components.formatCurrency
 import java.text.SimpleDateFormat
@@ -49,7 +50,7 @@ fun LoansScreen(
     val totalLoanAmount by viewModel.totalLoanAmount.collectAsState()
     val totalRemainingAmount by viewModel.totalRemainingAmount.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
-    var showRepaymentDialog by remember { mutableStateOf<Loan?>(null) }
+    var showRepaymentDialog by remember { mutableStateOf<LoanDisplay?>(null) }
 
     Scaffold(
         floatingActionButton = {
@@ -140,13 +141,11 @@ fun LoansScreen(
 
             // Loans List - Filtrer les prêts actifs
             val activeLoans = loans.filter { loan ->
-                val breakdown = calculateLoanBreakdown(loan)
-                (breakdown.interestRemaining + breakdown.principalRemaining) > 0
+                (loan.interestRemaining + loan.principalRemaining) > 0
             }
             
             val paidLoans = loans.filter { loan ->
-                val breakdown = calculateLoanBreakdown(loan)
-                (breakdown.interestRemaining + breakdown.principalRemaining) <= 0
+                (loan.interestRemaining + loan.principalRemaining) <= 0
             }
 
             if (activeLoans.isEmpty() && paidLoans.isEmpty()) {
@@ -206,7 +205,6 @@ fun LoansScreen(
                         items(activeLoans) { loan ->
                             LoanItemEnhanced(
                                 loan = loan,
-                                breakdown = calculateLoanBreakdown(loan),
                                 onDelete = { viewModel.deleteLoan(loan) },
                                 onRepay = { showRepaymentDialog = loan }
                             )
@@ -228,7 +226,6 @@ fun LoansScreen(
                         items(paidLoans) { loan ->
                             LoanItemEnhanced(
                                 loan = loan,
-                                breakdown = calculateLoanBreakdown(loan),
                                 onDelete = { viewModel.deleteLoan(loan) },
                                 onRepay = null,
                                 isPaid = true
@@ -254,9 +251,8 @@ fun LoansScreen(
         }
         
         showRepaymentDialog?.let { loan ->
-            RepaymentDialog(
+            RepaymentDialogForDisplay(
                 loan = loan,
-                breakdown = calculateLoanBreakdown(loan),
                 onDismiss = { showRepaymentDialog = null },
                 onConfirm = { interestAmount, principalAmount ->
                     viewModel.addRepayment(
@@ -271,37 +267,9 @@ fun LoansScreen(
     }
 }
 
-fun calculateLoanBreakdown(loan: Loan): LoanBreakdown {
-    val principal = loan.principal
-    val interestRate = loan.interestRate
-    val totalInterest = principal * (interestRate / 100)
-    val totalDue = principal + totalInterest
-    
-    // TODO: Récupérer les vrais remboursements depuis la DB
-    val interestPaid = 0.0
-    val principalPaid = 0.0
-    
-    val interestRemaining = (totalInterest - interestPaid).coerceAtLeast(0.0)
-    val principalRemaining = (principal - principalPaid).coerceAtLeast(0.0)
-    
-    val totalPaid = interestPaid + principalPaid
-    val progress = if (totalDue > 0) (totalPaid / totalDue).toFloat().coerceIn(0f, 1f) else 0f
-    
-    return LoanBreakdown(
-        totalInterest = totalInterest,
-        interestRemaining = interestRemaining,
-        principalRemaining = principalRemaining,
-        interestPaid = interestPaid,
-        principalPaid = principalPaid,
-        totalDue = totalDue,
-        progress = progress
-    )
-}
-
 @Composable
 fun LoanItemEnhanced(
-    loan: Loan,
-    breakdown: LoanBreakdown,
+    loan: LoanDisplay,
     onDelete: () -> Unit,
     onRepay: (() -> Unit)?,
     isPaid: Boolean = false
@@ -354,7 +322,7 @@ fun LoanItemEnhanced(
 
                     Column {
                         Text(
-                            text = formatCurrency(breakdown.totalDue),
+                            text = formatCurrency(loan.totalDue),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Bold
@@ -393,7 +361,7 @@ fun LoanItemEnhanced(
                     Divider(modifier = Modifier.padding(vertical = 8.dp))
                     
                     Text(
-                        text = "Capital: ${formatCurrency(loan.principal)} + Intérêts: ${formatCurrency(breakdown.totalInterest)}",
+                        text = "Capital: ${formatCurrency(loan.principal)} + Intérêts: ${formatCurrency(loan.totalInterest)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -412,17 +380,17 @@ fun LoanItemEnhanced(
                         Column(modifier = Modifier.padding(12.dp)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text("🏦 Intérêts:", style = MaterialTheme.typography.bodySmall)
-                                Text("${formatCurrency(breakdown.interestPaid)} / ${formatCurrency(breakdown.totalInterest)}", style = MaterialTheme.typography.bodySmall)
+                                Text("${formatCurrency(loan.interestPaid)} / ${formatCurrency(loan.totalInterest)}", style = MaterialTheme.typography.bodySmall)
                             }
-                            Text("Restant: ${formatCurrency(breakdown.interestRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
+                            Text("Restant: ${formatCurrency(loan.interestRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
                             
                             Spacer(modifier = Modifier.height(4.dp))
                             
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text("💰 Capital:", style = MaterialTheme.typography.bodySmall)
-                                Text("${formatCurrency(breakdown.principalPaid)} / ${formatCurrency(loan.principal)}", style = MaterialTheme.typography.bodySmall)
+                                Text("${formatCurrency(loan.principalPaid)} / ${formatCurrency(loan.principal)}", style = MaterialTheme.typography.bodySmall)
                             }
-                            Text("Restant: ${formatCurrency(breakdown.principalRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
+                            Text("Restant: ${formatCurrency(loan.principalRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
                         }
                     }
                 }
@@ -433,18 +401,18 @@ fun LoanItemEnhanced(
                 
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(
-                        text = "Restant: ${formatCurrency(breakdown.interestRemaining + breakdown.principalRemaining)}",
+                        text = "Restant: ${formatCurrency(loan.interestRemaining + loan.principalRemaining)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFFEF4444),
                         fontWeight = FontWeight.Medium
                     )
-                    Text("${(breakdown.progress * 100).toInt()}%", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("${(loan.progress * 100).toInt()}%", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 
                 Spacer(modifier = Modifier.height(4.dp))
                 
                 LinearProgressIndicator(
-                    progress = breakdown.progress,
+                    progress = loan.progress,
                     modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
                     color = Color(0xFF10B981),
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
@@ -468,6 +436,111 @@ fun LoanItemEnhanced(
             }
         )
     }
+}
+
+@Composable
+fun RepaymentDialogForDisplay(
+    loan: LoanDisplay,
+    onDismiss: () -> Unit,
+    onConfirm: (interestAmount: Double, principalAmount: Double) -> Unit
+) {
+    var interestAmount by remember { mutableStateOf("") }
+    var principalAmount by remember { mutableStateOf("") }
+    
+    // Couleurs pour les champs de texte
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = Color(0xFF1E293B),
+        unfocusedTextColor = Color(0xFF1E293B),
+        cursorColor = Color(0xFF10B981),
+        focusedBorderColor = Color(0xFF10B981),
+        unfocusedBorderColor = Color(0xFFCBD5E1),
+        focusedLabelColor = Color(0xFF10B981),
+        unfocusedLabelColor = Color(0xFF64748B),
+        focusedContainerColor = Color.White,
+        unfocusedContainerColor = Color.White
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color.White,
+        titleContentColor = Color(0xFF1E293B),
+        title = { 
+            Text(
+                "Remboursement - ${loan.purpose ?: loan.lender ?: "Prêt"}",
+                fontWeight = FontWeight.Bold
+            ) 
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9))) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text("Informations du prêt :", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+                        Text("Capital: ${formatCurrency(loan.principal)} · Intérêt: ${loan.interestRate}%", style = MaterialTheme.typography.bodySmall, color = Color(0xFF64748B))
+                        Text("Intérêts restants: ${formatCurrency(loan.interestRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
+                        Text("Capital restant: ${formatCurrency(loan.principalRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
+                    }
+                }
+                
+                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFD4AF37).copy(alpha = 0.1f))) {
+                    Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("💡")
+                        Text("Ce remboursement sera enregistré comme une dépense.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF856404))
+                    }
+                }
+                
+                OutlinedTextField(
+                    value = interestAmount,
+                    onValueChange = { interestAmount = it },
+                    label = { Text("Intérêts (max ${formatCurrency(loan.interestRemaining)})") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = textFieldColors,
+                    shape = RoundedCornerShape(12.dp)
+                )
+                
+                OutlinedTextField(
+                    value = principalAmount,
+                    onValueChange = { principalAmount = it },
+                    label = { Text("Capital (max ${formatCurrency(loan.principalRemaining)})") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = textFieldColors,
+                    shape = RoundedCornerShape(12.dp)
+                )
+                
+                val interest = interestAmount.toDoubleOrNull() ?: 0.0
+                val principal = principalAmount.toDoubleOrNull() ?: 0.0
+                val total = interest + principal
+                
+                if (total > 0) {
+                    Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF10B981).copy(alpha = 0.15f)), shape = RoundedCornerShape(8.dp)) {
+                        Column(Modifier.padding(12.dp)) {
+                            Text("Récapitulatif :", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
+                            Text("Intérêts: ${formatCurrency(interest)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFF1E293B))
+                            Text("Capital: ${formatCurrency(principal)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFF1E293B))
+                            Text("Total: ${formatCurrency(total)}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val interest = interestAmount.toDoubleOrNull() ?: 0.0
+                    val principal = principalAmount.toDoubleOrNull() ?: 0.0
+                    if (interest + principal > 0) onConfirm(interest, principal)
+                },
+                enabled = (interestAmount.toDoubleOrNull() ?: 0.0) + (principalAmount.toDoubleOrNull() ?: 0.0) > 0,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF10B981),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) { Text("Confirmer") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler", color = Color(0xFF64748B)) } }
+    )
 }
 
 @Composable

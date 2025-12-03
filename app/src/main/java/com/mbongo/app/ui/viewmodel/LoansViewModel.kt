@@ -1,11 +1,16 @@
 package com.mbongo.app.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbongo.app.data.local.entity.Loan
 import com.mbongo.app.data.local.entity.Repayment
 import com.mbongo.app.data.repository.LoanRepository
 import com.mbongo.app.data.repository.RepaymentRepository
+import com.mbongo.app.data.repository.RemoteRepository
+import com.mbongo.app.data.repository.ApiResult
+import com.mbongo.app.data.remote.dto.CreateLoanDto
+import com.mbongo.app.data.remote.dto.CreateRepaymentDto
 import com.mbongo.app.ui.screens.loans.LoanBreakdown
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -14,74 +19,165 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 
+// Modèle unifié pour affichage des prêts
+data class LoanDisplay(
+    val id: Long,
+    val principal: Double,
+    val interestRate: Double,
+    val termMonths: Int?,
+    val startDate: String?,
+    val lender: String?,
+    val purpose: String?,
+    val totalRepaid: Double,
+    val interestTotal: Double,
+    val interestPaid: Double,
+    val principalPaid: Double,
+    val interestRemaining: Double,
+    val principalRemaining: Double,
+    val totalDue: Double,
+    val balance: Double
+) {
+    // Propriétés calculées pour compatibilité avec l'UI
+    val totalInterest: Double get() = interestTotal
+    val progress: Float get() = if (totalDue > 0) ((totalRepaid) / totalDue).toFloat().coerceIn(0f, 1f) else 0f
+}
+
 @HiltViewModel
 class LoansViewModel @Inject constructor(
     private val loanRepository: LoanRepository,
-    private val repaymentRepository: RepaymentRepository
+    private val repaymentRepository: RepaymentRepository,
+    private val remoteRepository: RemoteRepository
 ) : ViewModel() {
+    
+    private val _useRemote = MutableStateFlow(true)
 
-    val loans: StateFlow<List<Loan>> = loanRepository.getAllLoans()
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    private val _loans = MutableStateFlow<List<LoanDisplay>>(emptyList())
+    val loans: StateFlow<List<LoanDisplay>> = _loans.asStateFlow()
 
-    val activeLoans: StateFlow<List<Loan>> = loanRepository.getActiveLoans()
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    private val _totalLoanAmount = MutableStateFlow(0.0)
+    val totalLoanAmount: StateFlow<Double> = _totalLoanAmount.asStateFlow()
 
-    val totalLoanAmount: StateFlow<Double> = loanRepository.getTotalLoanAmount()
-        .map { it ?: 0.0 }
-        .stateIn(viewModelScope, SharingStarted.Lazily, 0.0)
-
-    val totalRemainingAmount: StateFlow<Double> = loanRepository.getTotalRemainingAmount()
-        .map { it ?: 0.0 }
-        .stateIn(viewModelScope, SharingStarted.Lazily, 0.0)
+    private val _totalRemainingAmount = MutableStateFlow(0.0)
+    val totalRemainingAmount: StateFlow<Double> = _totalRemainingAmount.asStateFlow()
+    
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     // Cache des remboursements par prêt
     private val _repaymentsByLoan = MutableStateFlow<Map<Long, List<Repayment>>>(emptyMap())
     
     init {
-        // Charger tous les remboursements au démarrage
+        loadLoans()
+    }
+    
+    private fun loadLoans() {
         viewModelScope.launch {
-            loans.collect { loanList ->
-                loanList.forEach { loan ->
-                    repaymentRepository.getRepaymentsByLoan(loan.id).collect { repayments ->
-                        _repaymentsByLoan.value = _repaymentsByLoan.value + (loan.id to repayments)
+            _isLoading.value = true
+            
+            if (_useRemote.value) {
+                loadLoansFromRemote()
+            } else {
+                loadLoansFromLocal()
+            }
+        }
+    }
+    
+    private suspend fun loadLoansFromRemote() {
+        remoteRepository.getLoans().collect { result ->
+            when (result) {
+                is ApiResult.Loading -> _isLoading.value = true
+                is ApiResult.Success -> {
+                    _loans.value = result.data.map { dto ->
+                        LoanDisplay(
+                            id = dto.id,
+                            principal = dto.principal,
+                            interestRate = dto.interestRate,
+                            termMonths = dto.termMonths,
+                            startDate = dto.startDate,
+                            lender = dto.lender,
+                            purpose = dto.purpose,
+                            totalRepaid = dto.totalRepaid ?: 0.0,
+                            interestTotal = dto.principal * (dto.interestRate / 100),
+                            interestPaid = 0.0, // Calculé depuis API
+                            principalPaid = 0.0, // Calculé depuis API
+                            interestRemaining = 0.0,
+                            principalRemaining = dto.remaining ?: dto.principal,
+                            totalDue = dto.principal + (dto.principal * (dto.interestRate / 100)),
+                            balance = dto.remaining ?: dto.principal
+                        )
                     }
+                    _totalLoanAmount.value = result.data.sumOf { it.principal }
+                    _totalRemainingAmount.value = result.data.sumOf { it.remaining ?: it.principal }
+                    _isLoading.value = false
+                }
+                is ApiResult.Error -> {
+                    Log.e("LoansViewModel", "Remote error: ${result.message}")
+                    _isLoading.value = false
+                    loadLoansFromLocal()
                 }
             }
         }
     }
+    
+    private fun loadLoansFromLocal() {
+        viewModelScope.launch {
+            loanRepository.getAllLoans().collect { localLoans ->
+                _loans.value = localLoans.map { loan ->
+                    LoanDisplay(
+                        id = loan.id,
+                        principal = loan.principal,
+                        interestRate = loan.interestRate,
+                        termMonths = loan.termMonths,
+                        startDate = loan.startDate,
+                        lender = loan.lender,
+                        purpose = loan.purpose,
+                        totalRepaid = 0.0,
+                        interestTotal = loan.principal * (loan.interestRate / 100),
+                        interestPaid = 0.0,
+                        principalPaid = 0.0,
+                        interestRemaining = loan.principal * (loan.interestRate / 100),
+                        principalRemaining = loan.principal,
+                        totalDue = loan.principal + (loan.principal * (loan.interestRate / 100)),
+                        balance = loan.principal
+                    )
+                }
+                _totalLoanAmount.value = localLoans.sumOf { it.principal }
+                _totalRemainingAmount.value = localLoans.sumOf { it.principal }
+                _isLoading.value = false
+            }
+        }
+    }
 
-    fun calculateLoanBreakdown(loan: Loan): LoanBreakdown {
-        val principal = loan.principal
-        val interestRate = loan.interestRate
-        val totalInterest = principal * (interestRate / 100)
-        val totalDue = principal + totalInterest
-        
-        // Récupérer les remboursements depuis le cache
-        val repayments = _repaymentsByLoan.value[loan.id] ?: emptyList()
-        
-        val interestPaid = repayments.sumOf { it.interestAmount }
-        val principalPaid = repayments.sumOf { it.principalAmount }
-        
-        val interestRemaining = (totalInterest - interestPaid).coerceAtLeast(0.0)
-        val principalRemaining = (principal - principalPaid).coerceAtLeast(0.0)
-        
-        val totalPaid = interestPaid + principalPaid
-        val progress = if (totalDue > 0) (totalPaid / totalDue).toFloat().coerceIn(0f, 1f) else 0f
-        
+    fun calculateLoanBreakdown(loan: LoanDisplay): LoanBreakdown {
         return LoanBreakdown(
-            totalInterest = totalInterest,
-            interestRemaining = interestRemaining,
-            principalRemaining = principalRemaining,
-            interestPaid = interestPaid,
-            principalPaid = principalPaid,
-            totalDue = totalDue,
-            progress = progress
+            totalInterest = loan.interestTotal,
+            interestRemaining = loan.interestRemaining,
+            principalRemaining = loan.principalRemaining,
+            interestPaid = loan.interestPaid,
+            principalPaid = loan.principalPaid,
+            totalDue = loan.totalDue,
+            progress = if (loan.totalDue > 0) ((loan.totalRepaid / loan.totalDue).toFloat().coerceIn(0f, 1f)) else 0f
         )
     }
 
     fun addLoan(loan: Loan) {
         viewModelScope.launch {
-            loanRepository.insertLoan(loan)
+            if (_useRemote.value) {
+                val dto = CreateLoanDto(
+                    principal = loan.principal,
+                    interestRate = loan.interestRate,
+                    termMonths = loan.termMonths,
+                    startDate = loan.startDate,
+                    lender = loan.lender,
+                    purpose = loan.purpose
+                )
+                val result = remoteRepository.createLoan(dto)
+                if (result is ApiResult.Success) {
+                    loadLoans()
+                }
+            } else {
+                loanRepository.insertLoan(loan)
+            }
         }
     }
 
@@ -91,37 +187,55 @@ class LoansViewModel @Inject constructor(
         }
     }
 
-    fun deleteLoan(loan: Loan) {
+    fun deleteLoan(loan: LoanDisplay) {
         viewModelScope.launch {
-            loanRepository.deleteLoan(loan)
-        }
-    }
-
-    fun addRepayment(loan: Loan, interestAmount: Double, principalAmount: Double) {
-        viewModelScope.launch {
-            val repayment = Repayment(
-                loanId = loan.id,
-                amount = interestAmount + principalAmount,
-                interestAmount = interestAmount,
-                principalAmount = principalAmount,
-                date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-            )
-            repaymentRepository.insertRepayment(repayment)
-            
-            // Rafraîchir le cache des remboursements
-            repaymentRepository.getRepaymentsByLoan(loan.id).collect { repayments ->
-                _repaymentsByLoan.value = _repaymentsByLoan.value + (loan.id to repayments)
+            if (_useRemote.value) {
+                val result = remoteRepository.deleteLoan(loan.id)
+                if (result is ApiResult.Success) {
+                    loadLoans()
+                }
+            } else {
+                loanRepository.deleteLoan(Loan(
+                    id = loan.id,
+                    principal = loan.principal,
+                    interestRate = loan.interestRate,
+                    termMonths = loan.termMonths ?: 0,
+                    startDate = loan.startDate ?: "",
+                    lender = loan.lender,
+                    purpose = loan.purpose
+                ))
             }
         }
     }
 
-    fun addRepayment(repayment: Repayment, loan: Loan) {
+    fun addRepayment(loan: LoanDisplay, interestAmount: Double, principalAmount: Double) {
         viewModelScope.launch {
-            repaymentRepository.insertRepayment(repayment)
+            if (_useRemote.value) {
+                val dto = CreateRepaymentDto(
+                    loanId = loan.id,
+                    amount = interestAmount + principalAmount,
+                    interestAmount = interestAmount,
+                    principalAmount = principalAmount,
+                    date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                )
+                val result = remoteRepository.createRepayment(dto)
+                if (result is ApiResult.Success) {
+                    loadLoans()
+                }
+            } else {
+                val repayment = Repayment(
+                    loanId = loan.id,
+                    amount = interestAmount + principalAmount,
+                    interestAmount = interestAmount,
+                    principalAmount = principalAmount,
+                    date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                )
+                repaymentRepository.insertRepayment(repayment)
+            }
         }
     }
-
-    fun getRepaymentsByLoan(loanId: Long): Flow<List<Repayment>> {
-        return repaymentRepository.getRepaymentsByLoan(loanId)
+    
+    fun refresh() {
+        loadLoans()
     }
 }

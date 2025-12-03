@@ -21,6 +21,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.mbongo.app.data.local.entity.Income
 import com.mbongo.app.ui.viewmodel.IncomesViewModel
+import com.mbongo.app.ui.viewmodel.IncomeDisplay
 import com.mbongo.app.ui.components.CopyrightFooter
 import java.text.SimpleDateFormat
 import java.util.*
@@ -168,7 +169,7 @@ fun IncomesScreen(
 
 @Composable
 fun IncomeItem(
-    income: Income,
+    income: IncomeDisplay,
     onDelete: () -> Unit
 ) {
     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())

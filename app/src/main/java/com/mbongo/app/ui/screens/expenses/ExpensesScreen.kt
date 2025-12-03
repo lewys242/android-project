@@ -24,6 +24,7 @@ import androidx.navigation.NavController
 import com.mbongo.app.data.local.entity.Expense
 import com.mbongo.app.ui.viewmodel.ExpensesViewModel
 import com.mbongo.app.ui.viewmodel.ExpenseResult
+import com.mbongo.app.ui.viewmodel.ExpenseDisplay
 import com.mbongo.app.ui.components.CopyrightFooter
 import java.text.SimpleDateFormat
 import java.util.*
@@ -254,7 +255,7 @@ fun ExpensesScreen(
 
 @Composable
 fun ExpenseItem(
-    expense: Expense,
+    expense: ExpenseDisplay,
     onDelete: () -> Unit
 ) {
     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())

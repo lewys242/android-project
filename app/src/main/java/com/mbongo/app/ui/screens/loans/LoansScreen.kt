@@ -52,6 +52,11 @@ fun LoansScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var showRepaymentDialog by remember { mutableStateOf<LoanDisplay?>(null) }
 
+    // Rafraîchir les données à chaque fois que l'écran devient visible
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
+
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(

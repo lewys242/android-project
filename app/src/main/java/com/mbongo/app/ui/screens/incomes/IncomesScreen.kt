@@ -36,6 +36,11 @@ fun IncomesScreen(
     val totalIncomes by viewModel.totalIncomes.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
 
+    // Rafraîchir les données à chaque fois que l'écran devient visible
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
+
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(

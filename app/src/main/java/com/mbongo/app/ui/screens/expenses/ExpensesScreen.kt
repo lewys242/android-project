@@ -40,7 +40,11 @@ fun ExpensesScreen(
     val hasSalary by viewModel.hasSalary.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
     var showNoSalaryDialog by remember { mutableStateOf(false) }
-    val context = LocalContext.current
+
+    // Rafraîchir les données à chaque fois que l'écran devient visible
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
 
     // Observer les résultats d'ajout
     LaunchedEffect(Unit) {
@@ -48,6 +52,7 @@ fun ExpensesScreen(
             when (result) {
                 is ExpenseResult.Success -> {
                     showAddDialog = false
+                    viewModel.refresh() // Rafraîchir après ajout réussi
                 }
                 is ExpenseResult.Error -> {
                     showNoSalaryDialog = true

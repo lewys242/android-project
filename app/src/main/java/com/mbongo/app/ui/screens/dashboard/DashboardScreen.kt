@@ -35,6 +35,11 @@ fun DashboardScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
+    // Rafraîchir les données à chaque fois que l'écran devient visible
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
+    
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()

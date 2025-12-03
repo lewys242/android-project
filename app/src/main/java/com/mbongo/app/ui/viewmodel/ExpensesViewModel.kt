@@ -53,13 +53,14 @@ class ExpensesViewModel @Inject constructor(
     private val _expenses = MutableStateFlow<List<ExpenseDisplay>>(emptyList())
     val expenses: StateFlow<List<ExpenseDisplay>> = _expenses.asStateFlow()
 
-    val categories: StateFlow<List<Category>> = categoryRepository.getCategoriesByType("expense")
-        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    // Catégories depuis l'API
+    private val _categories = MutableStateFlow<List<Category>>(emptyList())
+    val categories: StateFlow<List<Category>> = _categories.asStateFlow()
 
     private val _totalExpenses = MutableStateFlow(0.0)
     val totalExpenses: StateFlow<Double> = _totalExpenses.asStateFlow()
 
-    private val _hasSalary = MutableStateFlow(false)
+    private val _hasSalary = MutableStateFlow(true) // Par défaut true pour l'API distante
     val hasSalary: StateFlow<Boolean> = _hasSalary.asStateFlow()
 
     private val _addExpenseResult = MutableSharedFlow<ExpenseResult>()
@@ -70,6 +71,42 @@ class ExpensesViewModel @Inject constructor(
 
     init {
         loadExpenses()
+        loadCategories()
+    }
+    
+    private fun loadCategories() {
+        viewModelScope.launch {
+            if (_useRemote.value) {
+                remoteRepository.getCategories().collect { result ->
+                    when (result) {
+                        is ApiResult.Success -> {
+                            _categories.value = result.data.map { dto ->
+                                Category(
+                                    id = dto.id,
+                                    name = dto.name,
+                                    color = dto.color ?: "#10b981",
+                                    icon = dto.icon ?: "📦",
+                                    type = dto.type ?: "expense"
+                                )
+                            }
+                            Log.d("ExpensesViewModel", "Loaded ${result.data.size} categories from API")
+                        }
+                        is ApiResult.Error -> {
+                            Log.e("ExpensesViewModel", "Error loading categories: ${result.message}")
+                            // Fallback vers local
+                            categoryRepository.getCategoriesByType("expense").collect { localCats ->
+                                _categories.value = localCats
+                            }
+                        }
+                        is ApiResult.Loading -> {}
+                    }
+                }
+            } else {
+                categoryRepository.getCategoriesByType("expense").collect { localCats ->
+                    _categories.value = localCats
+                }
+            }
+        }
     }
     
     private fun loadExpenses() {

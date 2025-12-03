@@ -311,11 +311,8 @@ fun AddIncomeDialog(
     var description by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
     var incomeType by remember { mutableStateOf("salary") } // "salary" ou "other"
-    val categories by viewModel.categories.collectAsState()
-    var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
-    var expanded by remember { mutableStateOf(false) }
     
-    // Couleurs pour les champs de texte
+    // Couleurs pour les champs de texte - style web app
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedTextColor = Color(0xFF1E293B),
         unfocusedTextColor = Color(0xFF1E293B),
@@ -330,116 +327,122 @@ fun AddIncomeDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        modifier = Modifier.fillMaxWidth(),
         containerColor = Color.White,
         titleContentColor = Color(0xFF1E293B),
         title = { 
             Text(
                 "Nouveau revenu",
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E293B)
             ) 
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 // Type de revenu (Salaire / Autre)
-                Text(
-                    text = "Type de revenu",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color(0xFF64748B)
-                )
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterChip(
-                        selected = incomeType == "salary",
-                        onClick = { incomeType = "salary" },
-                        label = { Text("💰 Salaire", color = if (incomeType == "salary") Color(0xFF10B981) else Color(0xFF64748B)) },
-                        modifier = Modifier.weight(1f),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0xFF10B981).copy(alpha = 0.15f),
-                            containerColor = Color(0xFFF1F5F9)
-                        )
+                Column {
+                    Text(
+                        text = "Type de revenu",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color(0xFF64748B),
+                        modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    FilterChip(
-                        selected = incomeType == "other",
-                        onClick = { incomeType = "other" },
-                        label = { Text("💵 Autre", color = if (incomeType == "other") Color(0xFF667EEA) else Color(0xFF64748B)) },
-                        modifier = Modifier.weight(1f),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0xFF667EEA).copy(alpha = 0.15f),
-                            containerColor = Color(0xFFF1F5F9)
-                        )
-                    )
-                }
-                
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text(if (incomeType == "salary") "Source (ex: Employeur)" else "Description") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    colors = textFieldColors,
-                    shape = RoundedCornerShape(12.dp)
-                )
-
-                OutlinedTextField(
-                    value = amount,
-                    onValueChange = { amount = it },
-                    label = { Text("Montant (FCFA)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    colors = textFieldColors,
-                    shape = RoundedCornerShape(12.dp)
-                )
-
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded }
-                ) {
-                    OutlinedTextField(
-                        value = categories.find { it.id == selectedCategoryId }?.name ?: "Sélectionner",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Catégorie") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(),
-                        colors = textFieldColors,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        categories.forEach { category ->
-                            DropdownMenuItem(
-                                text = { Text(category.name, color = Color(0xFF1E293B)) },
-                                onClick = {
-                                    selectedCategoryId = category.id
-                                    expanded = false
-                                }
-                            )
+                        // Bouton Salaire
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { incomeType = "salary" },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (incomeType == "salary") Color(0xFF10B981).copy(alpha = 0.15f) else Color(0xFFF1F5F9),
+                            border = if (incomeType == "salary") 
+                                androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF10B981)) 
+                            else null
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("💰 ", style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    "Salaire",
+                                    color = if (incomeType == "salary") Color(0xFF10B981) else Color(0xFF64748B),
+                                    fontWeight = if (incomeType == "salary") FontWeight.SemiBold else FontWeight.Normal
+                                )
+                            }
+                        }
+                        
+                        // Bouton Autre
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { incomeType = "other" },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (incomeType == "other") Color(0xFF667EEA).copy(alpha = 0.15f) else Color(0xFFF1F5F9),
+                            border = if (incomeType == "other") 
+                                androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF667EEA)) 
+                            else null
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("💵 ", style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    "Autre",
+                                    color = if (incomeType == "other") Color(0xFF667EEA) else Color(0xFF64748B),
+                                    fontWeight = if (incomeType == "other") FontWeight.SemiBold else FontWeight.Normal
+                                )
+                            }
                         }
                     }
                 }
                 
+                // Description
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text(if (incomeType == "salary") "Source (ex: Employeur)" else "Description", color = Color(0xFF64748B)) },
+                    placeholder = { Text(if (incomeType == "salary") "Nom de l'entreprise" else "Ex: Freelance, Prime...", color = Color(0xFF94A3B8)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = textFieldColors,
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                // Montant
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = { amount = it.filter { c -> c.isDigit() || c == '.' } },
+                    label = { Text("Montant (FCFA)", color = Color(0xFF64748B)) },
+                    placeholder = { Text("0", color = Color(0xFF94A3B8)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = textFieldColors,
+                    shape = RoundedCornerShape(12.dp)
+                )
+                
                 // Note si type = salaire
                 if (incomeType == "salary") {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFF10B981).copy(alpha = 0.1f)
-                        )
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xFF10B981).copy(alpha = 0.1f)
                     ) {
                         Row(
                             modifier = Modifier.padding(12.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("ℹ️")
+                            Text("ℹ️", style = MaterialTheme.typography.bodyMedium)
                             Text(
                                 text = "Le salaire est requis pour pouvoir enregistrer des dépenses ce mois.",
                                 style = MaterialTheme.typography.bodySmall,
@@ -454,30 +457,33 @@ fun AddIncomeDialog(
             Button(
                 onClick = {
                     if (description.isNotBlank() && amount.isNotBlank()) {
-                            onConfirm(
-                                Income(
-                                    description = description,
-                                    amount = amount.toDoubleOrNull() ?: 0.0,
-                                    month = java.text.SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(java.util.Date()),
-                                    date = java.text.SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(java.util.Date()),
-                                    type = incomeType
-                                )
+                        onConfirm(
+                            Income(
+                                description = description,
+                                amount = amount.toDoubleOrNull() ?: 0.0,
+                                month = java.text.SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(java.util.Date()),
+                                date = java.text.SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(java.util.Date()),
+                                type = incomeType
                             )
-                        }
+                        )
+                    }
                 },
-                enabled = description.isNotBlank() && amount.isNotBlank() && selectedCategoryId != null,
+                enabled = description.isNotBlank() && amount.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF10B981),
-                    contentColor = Color.White
+                    contentColor = Color.White,
+                    disabledContainerColor = Color(0xFFCBD5E1),
+                    disabledContentColor = Color.White
                 ),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.height(44.dp)
             ) {
-                Text("Ajouter")
+                Text("Ajouter", fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler", color = Color(0xFF64748B))
+                Text("Annuler", color = Color(0xFF64748B), fontWeight = FontWeight.Medium)
             }
         }
     )

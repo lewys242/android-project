@@ -374,7 +374,7 @@ fun AddExpenseDialog(
     var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
     var expanded by remember { mutableStateOf(false) }
     
-    // Couleurs pour les champs de texte
+    // Couleurs pour les champs de texte - style web app
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedTextColor = Color(0xFF1E293B),
         unfocusedTextColor = Color(0xFF1E293B),
@@ -389,66 +389,158 @@ fun AddExpenseDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        modifier = Modifier.fillMaxWidth(),
         containerColor = Color.White,
         titleContentColor = Color(0xFF1E293B),
         title = { 
             Text(
                 "Nouvelle dépense",
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E293B)
             ) 
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
+                // Description
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Description") },
+                    label = { Text("Description", color = Color(0xFF64748B)) },
+                    placeholder = { Text("Ex: Restaurant, courses...", color = Color(0xFF94A3B8)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = textFieldColors,
                     shape = RoundedCornerShape(12.dp)
                 )
 
+                // Montant
                 OutlinedTextField(
                     value = amount,
-                    onValueChange = { amount = it },
-                    label = { Text("Montant (FCFA)") },
+                    onValueChange = { amount = it.filter { c -> c.isDigit() || c == '.' } },
+                    label = { Text("Montant (FCFA)", color = Color(0xFF64748B)) },
+                    placeholder = { Text("0", color = Color(0xFF94A3B8)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = textFieldColors,
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded }
-                ) {
-                    OutlinedTextField(
-                        value = categories.find { it.id == selectedCategoryId }?.name ?: "Sélectionner",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Catégorie") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(),
-                        colors = textFieldColors,
-                        shape = RoundedCornerShape(12.dp)
+                // Sélecteur de catégorie - Style web app
+                Column {
+                    Text(
+                        "Catégorie",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color(0xFF64748B),
+                        modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    ExposedDropdownMenu(
+                    
+                    ExposedDropdownMenuBox(
                         expanded = expanded,
-                        onDismissRequest = { expanded = false }
+                        onExpandedChange = { expanded = !expanded }
                     ) {
-                        categories.forEach { category ->
-                            DropdownMenuItem(
-                                text = { Text(category.name, color = Color(0xFF1E293B)) },
-                                onClick = {
-                                    selectedCategoryId = category.id
-                                    expanded = false
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor()
+                                .clickable { expanded = true },
+                            shape = RoundedCornerShape(12.dp),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                if (expanded) Color(0xFF10B981) else Color(0xFFCBD5E1)
+                            ),
+                            color = Color.White
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val selectedCategory = categories.find { it.id == selectedCategoryId }
+                                if (selectedCategory != null) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            selectedCategory.icon,
+                                            style = MaterialTheme.typography.bodyLarge
+                                        )
+                                        Text(
+                                            selectedCategory.name,
+                                            color = Color(0xFF1E293B),
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                } else {
+                                    Text(
+                                        "Sélectionner une catégorie",
+                                        color = Color(0xFF94A3B8)
+                                    )
                                 }
-                            )
+                                Icon(
+                                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                    contentDescription = null,
+                                    tint = Color(0xFF64748B)
+                                )
+                            }
+                        }
+                        
+                        // Menu déroulant avec fond blanc
+                        DropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false },
+                            modifier = Modifier
+                                .background(Color.White)
+                                .heightIn(max = 300.dp)
+                        ) {
+                            categories.forEach { category ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            // Icône de catégorie
+                                            Surface(
+                                                modifier = Modifier.size(32.dp),
+                                                shape = CircleShape,
+                                                color = try {
+                                                    Color(android.graphics.Color.parseColor(category.color))
+                                                } catch (e: Exception) {
+                                                    Color(0xFF10B981)
+                                                }.copy(alpha = 0.15f)
+                                            ) {
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Text(
+                                                        category.icon,
+                                                        style = MaterialTheme.typography.bodyMedium
+                                                    )
+                                                }
+                                            }
+                                            Text(
+                                                category.name,
+                                                color = Color(0xFF1E293B),
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedCategoryId = category.id
+                                        expanded = false
+                                    },
+                                    modifier = Modifier.background(
+                                        if (selectedCategoryId == category.id) 
+                                            Color(0xFF10B981).copy(alpha = 0.1f) 
+                                        else 
+                                            Color.White
+                                    )
+                                )
+                            }
                         }
                     }
                 }
@@ -471,16 +563,19 @@ fun AddExpenseDialog(
                 enabled = description.isNotBlank() && amount.isNotBlank() && selectedCategoryId != null,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF10B981),
-                    contentColor = Color.White
+                    contentColor = Color.White,
+                    disabledContainerColor = Color(0xFFCBD5E1),
+                    disabledContentColor = Color.White
                 ),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.height(44.dp)
             ) {
-                Text("Ajouter")
+                Text("Ajouter", fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler", color = Color(0xFF64748B))
+                Text("Annuler", color = Color(0xFF64748B), fontWeight = FontWeight.Medium)
             }
         }
     )

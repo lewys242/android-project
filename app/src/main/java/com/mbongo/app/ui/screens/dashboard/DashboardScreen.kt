@@ -65,7 +65,7 @@ fun DashboardScreen(
             }
         }
         
-        // Carte de Gestion (Management Card)
+        // Carte de Gestion (Management Card) - comme web
         item {
             ManagementCard(
                 usagePercent = uiState.usagePercent,
@@ -74,7 +74,10 @@ fun DashboardScreen(
                 currentMonth = uiState.currentMonth,
                 previousMonthIncome = uiState.previousMonthIncome,
                 previousMonthExpenses = uiState.previousMonthExpenses,
-                previousMonthBalance = uiState.previousMonthBalance
+                previousMonthBalance = uiState.previousMonthBalance,
+                totalIncome = uiState.totalIncome,
+                totalExpenses = uiState.totalExpenses,
+                balance = uiState.balance
             )
         }
         
@@ -105,9 +108,20 @@ fun DashboardScreen(
                     amount = uiState.totalExpenses,
                     icon = Icons.Default.TrendingDown,
                     modifier = Modifier.weight(1f),
-                    color = MaterialTheme.colorScheme.error
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
+        }
+        
+        // Carte Épargne avec options 5% et 10%
+        item {
+            SavingsCardDashboard(
+                totalIncome = uiState.totalIncome,
+                savingsRate = uiState.savingsRate,
+                savingsEnabled = uiState.savingsEnabled,
+                onRateChange = { rate -> viewModel.setSavingsRate(rate) },
+                onEnabledChange = { enabled -> viewModel.setSavingsEnabled(enabled) }
+            )
         }
         
         item {
@@ -115,19 +129,18 @@ fun DashboardScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                StatCard(
-                    title = "Épargne",
-                    amount = uiState.totalSavings,
-                    icon = Icons.Default.Savings,
-                    modifier = Modifier.weight(1f),
-                    color = MaterialTheme.colorScheme.secondary
-                )
+                // Carte Prêts
                 StatCard(
                     title = "Prêts",
                     amount = uiState.totalLoans,
                     icon = Icons.Default.AccountBalance,
                     modifier = Modifier.weight(1f),
                     color = MaterialTheme.colorScheme.primary
+                )
+                // Carte Transactions (comme web)
+                TransactionCountCard(
+                    count = uiState.transactionCount,
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -227,39 +240,69 @@ fun ManagementCard(
     previousMonthIncome: Double,
     previousMonthExpenses: Double,
     previousMonthBalance: Double,
+    totalIncome: Double = 0.0,
+    totalExpenses: Double = 0.0,
+    balance: Double = 0.0,
     modifier: Modifier = Modifier
 ) {
     var showPreviousMonth by remember { mutableStateOf(false) }
+    var showAdvice by remember { mutableStateOf(false) }
     
-    // Couleurs selon le niveau
+    // Couleurs selon le niveau (comme dans le web)
     val (backgroundColor, iconColor, emoji, title, advice) = when (managementLevel) {
         ManagementLevel.GOOD -> {
             ManagementStyle(
-                Color(0xFF10B981).copy(alpha = 0.15f),
+                Color(0xFF1A2A1A), // Fond vert foncé comme web
                 Color(0xFF10B981),
-                "✨",
-                "Excellente gestion",
+                "✅",
+                "Bonne gestion",
                 "Continuez ainsi ! Vous gérez bien votre budget."
             )
         }
         ManagementLevel.WARNING -> {
             ManagementStyle(
-                Color(0xFFF59E0B).copy(alpha = 0.15f),
+                Color(0xFF2A2A1A), // Fond jaune foncé comme web
                 Color(0xFFF59E0B),
                 "⚠️",
                 "Attention",
-                "Vous approchez de votre limite. Réduisez les dépenses non essentielles."
+                "Vous approchez de votre limite. Surveillez vos postes de dépenses."
             )
         }
         ManagementLevel.BAD -> {
             ManagementStyle(
-                Color(0xFFEF4444).copy(alpha = 0.15f),
+                Color(0xFF2A2A2A), // Fond rouge foncé comme web
                 Color(0xFFEF4444),
-                "🚨",
-                "Dépassement",
-                "Vos dépenses dépassent vos revenus ! Revoyez votre budget immédiatement."
+                "❌",
+                "Mauvaise gestion",
+                "Vos dépenses dépassent vos revenus ! Revoyez votre budget."
             )
         }
+    }
+    
+    // Conseils selon le niveau (identique au web)
+    val adviceList = when (managementLevel) {
+        ManagementLevel.BAD -> listOf(
+            "Identifiez les dépenses non essentielles à réduire",
+            "Reportez les achats non urgents au mois prochain",
+            "Cherchez des sources de revenus complémentaires"
+        )
+        ManagementLevel.WARNING -> listOf(
+            "Surveillez vos postes de dépenses cette fin de mois",
+            "Évitez les achats impulsifs",
+            "Gardez une marge pour les imprévus"
+        )
+        ManagementLevel.GOOD -> listOf(
+            "Continuez ainsi ! Pensez à épargner le surplus",
+            "Profitez-en pour constituer un fond d'urgence",
+            "Vous pouvez vous faire un petit plaisir raisonnable 🎁"
+        )
+    }
+    
+    // Titre conseil selon niveau
+    val adviceTitle = when (managementLevel) {
+        ManagementLevel.BAD -> "🚨 Vous dépensez plus que vous gagnez !"
+        ManagementLevel.WARNING -> "⚡ Vous approchez de votre limite"
+        ManagementLevel.GOOD -> "🎉 Excellent ! Vous gérez bien votre budget"
     }
     
     // Formater le mois précédent
@@ -269,10 +312,9 @@ fun ManagementCard(
             val calendar = Calendar.getInstance()
             calendar.time = sdf.parse(currentMonth) ?: Date()
             calendar.add(Calendar.MONTH, -1)
-            val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.FRENCH)
-            monthFormat.format(calendar.time).replaceFirstChar { it.uppercase() }
+            "${calendar.get(Calendar.MONTH) + 1}/${calendar.get(Calendar.YEAR)}"
         } catch (e: Exception) {
-            "Mois précédent"
+            "?"
         }
     }
     
@@ -281,14 +323,15 @@ fun ManagementCard(
         colors = CardDefaults.cardColors(
             containerColor = backgroundColor
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, iconColor)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // En-tête avec emoji et titre
+            // En-tête avec emoji et titre (comme web)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -298,113 +341,223 @@ fun ManagementCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = emoji,
-                        style = MaterialTheme.typography.headlineSmall
-                    )
+                    // Icône dans un cercle (comme web)
+                    Surface(
+                        modifier = Modifier.size(40.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        color = when (managementLevel) {
+                            ManagementLevel.GOOD -> Color(0xFFD1FAE5)
+                            ManagementLevel.WARNING -> Color(0xFFFEF3C7)
+                            ManagementLevel.BAD -> Color(0xFFFEF2F2)
+                        }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = emoji,
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                        }
+                    }
                     Column {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = iconColor,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "$usagePercent%",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
+                        }
                         if (!hasSalary) {
                             Text(
                                 text = "Aucun salaire enregistré",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFEF4444)
+                                color = Color(0xFFF59E0B)
                             )
                         }
                     }
                 }
-                
-                // Pourcentage
-                Text(
-                    text = "$usagePercent%",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = iconColor,
-                    fontWeight = FontWeight.Bold
-                )
             }
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Barre de progression
-            LinearProgressIndicator(
-                progress = (usagePercent / 100f).coerceIn(0f, 1f),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp)),
-                color = iconColor,
-                trackColor = iconColor.copy(alpha = 0.2f)
-            )
+            // Informations financières (comme web)
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = "💰 Salaire:", style = MaterialTheme.typography.bodySmall, color = Color.White)
+                    Text(
+                        text = "${String.format("%,.0f", totalIncome)} FCFA",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF10B981),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = "📉 Dépensé:", style = MaterialTheme.typography.bodySmall, color = Color.White)
+                    Text(
+                        text = "${String.format("%,.0f", totalExpenses)} FCFA",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFFD4AF37)
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = "📊 Reste:", style = MaterialTheme.typography.bodySmall, color = Color.White)
+                    Text(
+                        text = "${String.format("%,.0f", balance)} FCFA",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (balance >= 0) Color(0xFF10B981) else Color(0xFFEF4444),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Conseil
-            Text(
-                text = advice,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-            )
-            
-            // Section récapitulatif mois précédent (dépliable)
-            if (previousMonthIncome > 0 || previousMonthExpenses > 0) {
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Divider(color = iconColor.copy(alpha = 0.3f))
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showPreviousMonth = !showPreviousMonth }
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+            // Boutons d'action (comme web)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Bouton conseils
+                Button(
+                    onClick = { showAdvice = !showAdvice },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = iconColor
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                    modifier = Modifier.height(32.dp)
                 ) {
                     Text(
-                        text = "📅 Récap $previousMonthFormatted",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Icon(
-                        imageVector = if (showPreviousMonth) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = if (showPreviousMonth) "Réduire" else "Développer",
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        text = if (showAdvice) "▼ Conseils" else "▶ Conseils",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White
                     )
                 }
                 
-                AnimatedVisibility(
-                    visible = showPreviousMonth,
-                    enter = expandVertically(),
-                    exit = shrinkVertically()
+                // Bouton récap mois précédent
+                if (previousMonthIncome > 0) {
+                    Button(
+                        onClick = { showPreviousMonth = !showPreviousMonth },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White.copy(alpha = 0.1f)
+                        ),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.height(32.dp)
+                    ) {
+                        Text(
+                            text = if (showPreviousMonth) "▼ $previousMonthFormatted" else "▶ $previousMonthFormatted",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+            
+            // Section conseils dépliable (comme web)
+            AnimatedVisibility(
+                visible = showAdvice,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White.copy(alpha = 0.05f)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = adviceTitle,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = iconColor,
+                            fontWeight = FontWeight.Bold
+                        )
+                        adviceList.forEach { tip ->
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Text(text = "•", color = Color.White)
+                                Text(
+                                    text = tip,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Section récapitulatif mois précédent (dépliable)
+            AnimatedVisibility(
+                visible = showPreviousMonth && previousMonthIncome > 0,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White.copy(alpha = 0.05f)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
+                        Text(
+                            text = "📅 Récap $previousMonthFormatted",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
                         PreviousMonthRow(
-                            label = "Revenus",
+                            label = "💰 Salaire",
                             amount = previousMonthIncome,
                             color = Color(0xFF10B981)
                         )
                         PreviousMonthRow(
-                            label = "Dépenses",
+                            label = "📉 Dépensé",
                             amount = previousMonthExpenses,
-                            color = Color(0xFFEF4444)
+                            color = Color(0xFFD4AF37)
                         )
                         PreviousMonthRow(
-                            label = "Solde",
+                            label = "📊 Solde",
                             amount = previousMonthBalance,
                             color = if (previousMonthBalance >= 0) Color(0xFF10B981) else Color(0xFFEF4444)
                         )
+                        if (previousMonthIncome > 0) {
+                            val prevUsagePercent = ((previousMonthExpenses / previousMonthIncome) * 100).toInt()
+                            Text(
+                                text = "Taux: $prevUsagePercent%",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
+                        }
                     }
                 }
             }
@@ -492,7 +645,7 @@ fun MoneyCard(
                     Text(
                         text = "${String.format("%,.0f", balance)} $currency",
                         style = MaterialTheme.typography.headlineMedium,
-                        color = if (balance >= 0) MaterialTheme.colorScheme.primary else Color(0xFFEF4444),
+                        color = if (balance >= 0) MaterialTheme.colorScheme.primary else Color(0xFFF59E0B),
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -592,6 +745,209 @@ fun ActionTile(
                 color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Medium
             )
+        }
+    }
+}
+
+@Composable
+fun SavingsCardDashboard(
+    totalIncome: Double,
+    savingsRate: Int,
+    savingsEnabled: Boolean,
+    onRateChange: (Int) -> Unit,
+    onEnabledChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val goldColor = Color(0xFFD4AF37)
+    val darkBackground = Color(0xFF2A2A2A)
+    val mediumGray = Color(0xFF3A3A3A)
+    
+    val savingsAmount = if (totalIncome > 0 && savingsEnabled) {
+        totalIncome * (savingsRate / 100.0)
+    } else 0.0
+    
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = darkBackground
+        ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "💰",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Épargne recommandée",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = goldColor
+                    )
+                }
+                
+                // Toggle épargne
+                Switch(
+                    checked = savingsEnabled,
+                    onCheckedChange = onEnabledChange,
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = goldColor,
+                        checkedTrackColor = goldColor.copy(alpha = 0.5f),
+                        uncheckedThumbColor = Color.Gray,
+                        uncheckedTrackColor = Color.Gray.copy(alpha = 0.3f)
+                    )
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Montant de l'épargne
+            Text(
+                text = "${String.format("%,.0f", savingsAmount)} FCFA",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = if (savingsEnabled) goldColor else Color.Gray
+            )
+            
+            Text(
+                text = if (savingsEnabled) "Basé sur $savingsRate% de vos revenus" else "Épargne désactivée",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.7f)
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Boutons de taux 5% et 10%
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Bouton 5%
+                Button(
+                    onClick = { onRateChange(5) },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (savingsRate == 5) goldColor else mediumGray,
+                        contentColor = if (savingsRate == 5) Color.Black else Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = savingsEnabled
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = "5%",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "${String.format("%,.0f", totalIncome * 0.05)} F",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+                
+                // Bouton 10%
+                Button(
+                    onClick = { onRateChange(10) },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (savingsRate == 10) goldColor else mediumGray,
+                        contentColor = if (savingsRate == 10) Color.Black else Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = savingsEnabled
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = "10%",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "${String.format("%,.0f", totalIncome * 0.10)} F",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+            
+            if (totalIncome == 0.0) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "⚠️ Ajoutez un revenu pour calculer l'épargne",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFFF59E0B)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TransactionCountCard(
+    count: Int,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF2A2A2A)
+        ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Icône (comme web)
+            Surface(
+                modifier = Modifier.size(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFFDBEAFE) // Bleu clair comme web
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Receipt,
+                        contentDescription = null,
+                        tint = Color(0xFF3B82F6), // Bleu comme web
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+            
+            Column {
+                Text(
+                    text = "Transactions",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+                Text(
+                    text = "$count",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }

@@ -7,9 +7,8 @@ import com.mbongo.app.data.local.entity.Income
 import com.mbongo.app.data.local.entity.Category
 import com.mbongo.app.data.repository.IncomeRepository
 import com.mbongo.app.data.repository.CategoryRepository
-import com.mbongo.app.data.repository.RemoteRepository
-import com.mbongo.app.data.repository.ApiResult
-import com.mbongo.app.data.remote.dto.CreateIncomeDto
+import com.mbongo.app.data.sync.SyncService
+import com.mbongo.app.data.sync.SyncState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -24,21 +23,24 @@ data class IncomeDisplay(
     val description: String?,
     val month: String,
     val date: String?,
-    val type: String?
+    val type: String?,
+    val isSynced: Boolean = false
 )
 
 @HiltViewModel
 class IncomesViewModel @Inject constructor(
     private val incomeRepository: IncomeRepository,
     private val categoryRepository: CategoryRepository,
-    private val remoteRepository: RemoteRepository
+    private val syncService: SyncService
 ) : ViewModel() {
+    
+    companion object {
+        private const val TAG = "IncomesViewModel"
+    }
     
     private val dateFormat = SimpleDateFormat("yyyy-MM", Locale.getDefault())
     private val _currentMonth = MutableStateFlow(dateFormat.format(Date()))
     val currentMonth: StateFlow<String> = _currentMonth.asStateFlow()
-    
-    private val _useRemote = MutableStateFlow(true)
 
     private val _incomes = MutableStateFlow<List<IncomeDisplay>>(emptyList())
     val incomes: StateFlow<List<IncomeDisplay>> = _incomes.asStateFlow()
@@ -51,48 +53,21 @@ class IncomesViewModel @Inject constructor(
     
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    
+    // État de synchronisation
+    val syncState: StateFlow<SyncState> = syncService.syncState
+    val isServerAvailable: StateFlow<Boolean> = syncService.isServerAvailable
 
     init {
         loadIncomes()
+        // Tenter une synchronisation au démarrage
+        attemptSync()
     }
     
     private fun loadIncomes() {
         viewModelScope.launch {
-            val month = _currentMonth.value
             _isLoading.value = true
-            
-            if (_useRemote.value) {
-                loadIncomesFromRemote(month)
-            } else {
-                loadIncomesFromLocal()
-            }
-        }
-    }
-    
-    private suspend fun loadIncomesFromRemote(month: String) {
-        remoteRepository.getIncomes(month).collect { result ->
-            when (result) {
-                is ApiResult.Loading -> _isLoading.value = true
-                is ApiResult.Success -> {
-                    _incomes.value = result.data.map { dto ->
-                        IncomeDisplay(
-                            id = dto.id,
-                            amount = dto.amount,
-                            description = dto.description,
-                            month = dto.month,
-                            date = dto.date,
-                            type = dto.type
-                        )
-                    }
-                    _totalIncomes.value = result.data.sumOf { it.amount }
-                    _isLoading.value = false
-                }
-                is ApiResult.Error -> {
-                    Log.e("IncomesViewModel", "Remote error: ${result.message}")
-                    _isLoading.value = false
-                    loadIncomesFromLocal()
-                }
-            }
+            loadIncomesFromLocal()
         }
     }
     
@@ -106,7 +81,8 @@ class IncomesViewModel @Inject constructor(
                         description = income.description,
                         month = income.month,
                         date = income.date,
-                        type = income.type
+                        type = income.type,
+                        isSynced = income.isSynced
                     )
                 }
                 _totalIncomes.value = localIncomes.sumOf { it.amount }
@@ -117,52 +93,66 @@ class IncomesViewModel @Inject constructor(
 
     fun addIncome(income: Income) {
         viewModelScope.launch {
-            if (_useRemote.value) {
-                val dto = CreateIncomeDto(
-                    amount = income.amount,
-                    description = income.description,
-                    month = income.month,
-                    date = income.date,
-                    type = income.type,
-                    categoryId = null
-                )
-                val result = remoteRepository.createIncome(dto)
-                if (result is ApiResult.Success) {
-                    loadIncomes()
-                }
-            } else {
-                incomeRepository.insertIncome(income)
-            }
+            // Sauvegarder en local (non synchronisé par défaut)
+            val newIncome = income.copy(isSynced = false)
+            incomeRepository.insertIncome(newIncome)
+            Log.d(TAG, "Income added locally: ${income.description}, ${income.amount}")
+            
+            // Tenter de synchroniser avec le serveur
+            attemptSync()
         }
     }
 
     fun updateIncome(income: Income) {
         viewModelScope.launch {
-            incomeRepository.updateIncome(income)
+            // Marquer comme non synchronisé après modification
+            val updatedIncome = income.copy(isSynced = false)
+            incomeRepository.updateIncome(updatedIncome)
+            
+            // Tenter de synchroniser
+            attemptSync()
         }
     }
 
     fun deleteIncome(income: IncomeDisplay) {
         viewModelScope.launch {
-            if (_useRemote.value) {
-                val result = remoteRepository.deleteIncome(income.id)
-                if (result is ApiResult.Success) {
-                    loadIncomes()
-                }
+            // Marquer pour suppression (soft delete pour la sync)
+            incomeRepository.markForDeletion(income.id)
+            Log.d(TAG, "Income marked for deletion: ${income.id}")
+            
+            // Tenter de synchroniser
+            attemptSync()
+        }
+    }
+    
+    /**
+     * Tente de synchroniser les données avec le serveur
+     */
+    fun attemptSync() {
+        viewModelScope.launch {
+            Log.d(TAG, "Attempting sync...")
+            val success = syncService.syncIncomes()
+            if (success) {
+                Log.d(TAG, "Sync successful")
             } else {
-                incomeRepository.deleteIncome(Income(
-                    id = income.id,
-                    amount = income.amount,
-                    description = income.description,
-                    month = income.month,
-                    date = income.date ?: "",
-                    type = income.type ?: "other"
-                ))
+                Log.d(TAG, "Sync failed or offline - data saved locally")
             }
+        }
+    }
+    
+    /**
+     * Force une synchronisation manuelle
+     */
+    fun forceSync() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            syncService.syncIncomes()
+            _isLoading.value = false
         }
     }
     
     fun refresh() {
         loadIncomes()
+        attemptSync()
     }
 }

@@ -69,12 +69,12 @@ fun StatisticsScreen(
             )
         }
 
-        // Carte résumé principal
+        // Carte résumé principal - Thème sombre
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = Color(0xFF2A2A2A)
                 ),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -87,7 +87,7 @@ fun StatisticsScreen(
                     Text(
                         text = if (viewMode == "month") "Résumé du mois" else "Résumé de l'année",
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = Color(0xFFD4AF37),
                         fontWeight = FontWeight.Bold
                     )
                     
@@ -96,7 +96,7 @@ fun StatisticsScreen(
                             modifier = Modifier.fillMaxWidth().height(100.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator()
+                            CircularProgressIndicator(color = Color(0xFFD4AF37))
                         }
                     } else {
                         // Revenus
@@ -110,16 +110,16 @@ fun StatisticsScreen(
                         StatRow(
                             label = "Dépenses",
                             value = formatCurrency(state.totalExpenses),
-                            color = Color(0xFFEF4444)
+                            color = Color(0xFFF59E0B)
                         )
                         
-                        Divider(color = MaterialTheme.colorScheme.outlineVariant)
+                        Divider(color = Color(0xFF3A3A3A))
                         
                         // Balance
                         StatRow(
                             label = "Balance",
                             value = formatCurrency(state.balance),
-                            color = if (state.balance >= 0) Color(0xFF10B981) else Color(0xFFEF4444)
+                            color = if (state.balance >= 0) Color(0xFF10B981) else Color(0xFFF59E0B)
                         )
                         
                         // Barre de progression
@@ -128,7 +128,7 @@ fun StatisticsScreen(
                             Text(
                                 text = "Utilisation du budget: ${state.usedPercentage.toInt()}%",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color(0xFFCCCCCC)
                             )
                             LinearProgressIndicator(
                                 progress = state.usedPercentage / 100f,
@@ -137,11 +137,11 @@ fun StatisticsScreen(
                                     .height(8.dp)
                                     .clip(RoundedCornerShape(4.dp)),
                                 color = when {
-                                    state.usedPercentage > 90 -> Color(0xFFEF4444)
-                                    state.usedPercentage > 70 -> Color(0xFFF59E0B)
+                                    state.usedPercentage > 90 -> Color(0xFFF59E0B)
+                                    state.usedPercentage > 70 -> Color(0xFFD4AF37)
                                     else -> Color(0xFF10B981)
                                 },
-                                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                trackColor = Color(0xFF3A3A3A),
                             )
                         }
                     }
@@ -155,7 +155,7 @@ fun StatisticsScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = Color(0xFF2A2A2A)
                     ),
                     shape = RoundedCornerShape(16.dp)
                 ) {
@@ -168,7 +168,7 @@ fun StatisticsScreen(
                         Text(
                             text = "💰 Revenus vs Dépenses",
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = Color(0xFFD4AF37),
                             fontWeight = FontWeight.Bold
                         )
                         
@@ -189,7 +189,7 @@ fun StatisticsScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = Color(0xFF2A2A2A)
                     ),
                     shape = RoundedCornerShape(16.dp)
                 ) {
@@ -202,7 +202,7 @@ fun StatisticsScreen(
                         Text(
                             text = "📈 Dépenses par catégorie",
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = Color(0xFFD4AF37),
                             fontWeight = FontWeight.Bold
                         )
                         
@@ -234,7 +234,7 @@ fun StatisticsScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = Color(0xFF2A2A2A)
                     ),
                     shape = RoundedCornerShape(16.dp)
                 ) {
@@ -247,7 +247,7 @@ fun StatisticsScreen(
                         Text(
                             text = "📋 Détail par catégorie",
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = Color(0xFFD4AF37),
                             fontWeight = FontWeight.Bold
                         )
                         
@@ -275,7 +275,7 @@ fun StatisticsScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = Color(0xFF2A2A2A)
                     ),
                     shape = RoundedCornerShape(16.dp)
                 ) {
@@ -287,7 +287,7 @@ fun StatisticsScreen(
                         Text(
                             text = "📅 Évolution mensuelle $currentYear",
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = Color(0xFFD4AF37),
                             fontWeight = FontWeight.Bold
                         )
                         
@@ -307,7 +307,7 @@ fun StatisticsScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        containerColor = Color(0xFF2A2A2A)
                     ),
                     shape = RoundedCornerShape(16.dp)
                 ) {
@@ -325,13 +325,13 @@ fun StatisticsScreen(
                         Text(
                             text = "Aucune donnée",
                             style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = Color.White,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = "Commencez par ajouter des revenus et des dépenses pour voir vos statistiques.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = Color(0xFFCCCCCC),
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
                     }
@@ -356,7 +356,7 @@ fun StatRow(label: String, value: String, color: Color) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = Color(0xFFCCCCCC)
         )
         Text(
             text = value,
@@ -392,7 +392,7 @@ fun CategoryStatItem(
                 Text(
                     text = name,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color.White
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
@@ -400,12 +400,12 @@ fun CategoryStatItem(
                     text = amount,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color.White
                 )
                 Text(
                     text = "${percentage.toInt()}%",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color(0xFFCCCCCC)
                 )
             }
         }
@@ -417,7 +417,7 @@ fun CategoryStatItem(
                 .height(6.dp)
                 .clip(RoundedCornerShape(3.dp)),
             color = color,
-            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            trackColor = Color(0xFF3A3A3A),
         )
     }
 }

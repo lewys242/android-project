@@ -47,7 +47,7 @@ class ExpensesViewModel @Inject constructor(
     private val _currentMonth = MutableStateFlow(dateFormat.format(Date()))
     val currentMonth: StateFlow<String> = _currentMonth.asStateFlow()
     
-    private val _useRemote = MutableStateFlow(true)
+    private val _useRemote = MutableStateFlow(false)
     val useRemote: StateFlow<Boolean> = _useRemote.asStateFlow()
 
     private val _expenses = MutableStateFlow<List<ExpenseDisplay>>(emptyList())
@@ -60,7 +60,7 @@ class ExpensesViewModel @Inject constructor(
     private val _totalExpenses = MutableStateFlow(0.0)
     val totalExpenses: StateFlow<Double> = _totalExpenses.asStateFlow()
 
-    private val _hasSalary = MutableStateFlow(true) // Par défaut true pour l'API distante
+    private val _hasSalary = MutableStateFlow(false)
     val hasSalary: StateFlow<Boolean> = _hasSalary.asStateFlow()
 
     private val _addExpenseResult = MutableSharedFlow<ExpenseResult>()
@@ -161,7 +161,7 @@ class ExpensesViewModel @Inject constructor(
     private suspend fun checkSalaryFromRemote(month: String) {
         remoteRepository.getIncomes(month).collect { result ->
             if (result is ApiResult.Success) {
-                _hasSalary.value = result.data.any { it.type == "salary" }
+                _hasSalary.value = result.data.isNotEmpty()
             }
         }
     }
@@ -216,7 +216,7 @@ class ExpensesViewModel @Inject constructor(
                 
                 if (!hasSalaryForMonth) {
                     _addExpenseResult.emit(
-                        ExpenseResult.Error("Vous devez d'abord enregistrer un salaire pour ce mois avant d'ajouter des dépenses.")
+                        ExpenseResult.Error("Vous devez d'abord enregistrer un revenu pour ce mois avant d'ajouter des dépenses.")
                     )
                     return@launch
                 }

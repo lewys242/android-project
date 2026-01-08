@@ -23,6 +23,7 @@ import com.mbongo.app.data.local.entity.Income
 import com.mbongo.app.ui.viewmodel.IncomesViewModel
 import com.mbongo.app.ui.viewmodel.IncomeDisplay
 import com.mbongo.app.ui.components.CopyrightFooter
+import com.mbongo.app.data.sync.SyncStatus
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -34,6 +35,8 @@ fun IncomesScreen(
 ) {
     val incomes by viewModel.incomes.collectAsState()
     val totalIncomes by viewModel.totalIncomes.collectAsState()
+    val syncState by viewModel.syncState.collectAsState()
+    val isServerAvailable by viewModel.isServerAvailable.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
 
     // Rafraîchir les données à chaque fois que l'écran devient visible
@@ -58,40 +61,74 @@ fun IncomesScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            // Header
-            Text(
-                text = "Revenus",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.Bold
-            )
+            // Header avec état de sync
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Revenus",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                // Indicateur de synchronisation
+                SyncIndicator(
+                    isServerAvailable = isServerAvailable,
+                    syncStatus = syncState.status,
+                    pendingCount = syncState.pendingCount,
+                    onSyncClick = { viewModel.forceSync() }
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Total Card
+            // Total Card - thème sombre
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                )
+                    containerColor = Color(0xFF2A2A2A)
+                ),
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Column(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp)
+                        .padding(20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Total revenus",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "${String.format("%,.0f", totalIncomes)} FCFA",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.tertiary,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column {
+                        Text(
+                            text = "Total revenus",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "${String.format("%,.0f", totalIncomes)} FCFA",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = Color(0xFF10B981), // Vert succès
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    // Icône
+                    Surface(
+                        modifier = Modifier.size(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0xFF10B981).copy(alpha = 0.2f)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.TrendingUp,
+                                contentDescription = null,
+                                tint = Color(0xFF10B981),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
                 }
             }
 
@@ -102,8 +139,9 @@ fun IncomesScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
+                        containerColor = Color(0xFF2A2A2A)
+                    ),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Box(
                         modifier = Modifier
@@ -115,21 +153,19 @@ fun IncomesScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.AttachMoney,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            Text(
+                                text = "💰",
+                                style = MaterialTheme.typography.displayMedium
                             )
                             Text(
                                 text = "Aucun revenu",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color.White
                             )
                             Text(
                                 text = "Appuyez sur + pour ajouter",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                color = Color.White.copy(alpha = 0.7f)
                             )
                         }
                     }
@@ -191,13 +227,19 @@ fun IncomeItem(
     
     val isSalary = income.type == "salary"
 
+    val goldColor = Color(0xFFD4AF37)
+    val successGreen = Color(0xFF10B981)
+    val darkCard = Color(0xFF2A2A2A)
+    val mediumGray = Color(0xFF3A3A3A)
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { },
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+            containerColor = darkCard
+        ),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Row(
             modifier = Modifier
@@ -213,11 +255,11 @@ fun IncomeItem(
             ) {
                 Surface(
                     modifier = Modifier.size(48.dp),
-                    shape = CircleShape,
+                    shape = RoundedCornerShape(12.dp),
                     color = if (isSalary) 
-                        MaterialTheme.colorScheme.primaryContainer 
+                        successGreen.copy(alpha = 0.2f)
                     else 
-                        MaterialTheme.colorScheme.tertiaryContainer
+                        goldColor.copy(alpha = 0.2f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(
@@ -235,18 +277,18 @@ fun IncomeItem(
                         Text(
                             text = income.description ?: "",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = Color.White,
                             fontWeight = FontWeight.Medium
                         )
                         if (isSalary) {
                             Surface(
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer
+                                shape = RoundedCornerShape(4.dp),
+                                color = successGreen.copy(alpha = 0.2f)
                             ) {
                                 Text(
                                     text = "SALAIRE",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary,
+                                    color = successGreen,
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                     fontWeight = FontWeight.Bold
                                 )
@@ -256,7 +298,7 @@ fun IncomeItem(
                     Text(
                         text = dateFormat.format(parsedDate ?: Date()),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.White.copy(alpha = 0.6f)
                     )
                 }
             }
@@ -268,14 +310,14 @@ fun IncomeItem(
                 Text(
                     text = "+${String.format("%,.0f", income.amount)} F",
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.tertiary,
+                    color = successGreen,
                     fontWeight = FontWeight.Bold
                 )
                 IconButton(onClick = { showDeleteDialog = true }) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Supprimer",
-                        tint = MaterialTheme.colorScheme.error
+                        tint = goldColor
                     )
                 }
             }
@@ -285,7 +327,10 @@ fun IncomeItem(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Confirmer la suppression") },
+            containerColor = Color(0xFF2A2A2A),
+            titleContentColor = Color.White,
+            textContentColor = Color.White.copy(alpha = 0.8f),
+            title = { Text("Confirmer la suppression", color = goldColor, fontWeight = FontWeight.Bold) },
             text = { Text("Voulez-vous vraiment supprimer ce revenu ?") },
             confirmButton = {
                 TextButton(
@@ -294,12 +339,12 @@ fun IncomeItem(
                         showDeleteDialog = false
                     }
                 ) {
-                    Text("Supprimer", color = MaterialTheme.colorScheme.error)
+                    Text("Supprimer", color = goldColor)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Annuler")
+                    Text("Annuler", color = Color(0xFFCCCCCC))
                 }
             }
         )
@@ -317,29 +362,39 @@ fun AddIncomeDialog(
     var amount by remember { mutableStateOf("") }
     var incomeType by remember { mutableStateOf("salary") } // "salary" ou "other"
     
-    // Couleurs pour les champs de texte - style web app
+    // Couleurs du thème sombre
+    val goldColor = Color(0xFFD4AF37)
+    val darkBackground = Color(0xFF2A2A2A)
+    val mediumGray = Color(0xFF3A3A3A)
+    val lightGray = Color(0xFFCCCCCC)
+    val successGreen = Color(0xFF10B981)
+    val purpleColor = Color(0xFF667EEA)
+    
+    // Couleurs pour les champs de texte - thème sombre
     val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = Color(0xFF1E293B),
-        unfocusedTextColor = Color(0xFF1E293B),
-        cursorColor = Color(0xFF10B981),
-        focusedBorderColor = Color(0xFF10B981),
-        unfocusedBorderColor = Color(0xFFCBD5E1),
-        focusedLabelColor = Color(0xFF10B981),
-        unfocusedLabelColor = Color(0xFF64748B),
-        focusedContainerColor = Color.White,
-        unfocusedContainerColor = Color.White
+        focusedTextColor = Color.White,
+        unfocusedTextColor = Color.White,
+        cursorColor = goldColor,
+        focusedBorderColor = goldColor,
+        unfocusedBorderColor = mediumGray,
+        focusedLabelColor = goldColor,
+        unfocusedLabelColor = lightGray,
+        focusedContainerColor = mediumGray,
+        unfocusedContainerColor = mediumGray,
+        focusedPlaceholderColor = lightGray.copy(alpha = 0.5f),
+        unfocusedPlaceholderColor = lightGray.copy(alpha = 0.5f)
     )
 
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.fillMaxWidth(),
-        containerColor = Color.White,
-        titleContentColor = Color(0xFF1E293B),
+        containerColor = darkBackground,
+        titleContentColor = Color.White,
         title = { 
             Text(
                 "Nouveau revenu",
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E293B)
+                color = goldColor
             ) 
         },
         text = {
@@ -352,7 +407,7 @@ fun AddIncomeDialog(
                     Text(
                         text = "Type de revenu",
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFF64748B),
+                        color = lightGray,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     
@@ -366,10 +421,10 @@ fun AddIncomeDialog(
                                 .weight(1f)
                                 .clickable { incomeType = "salary" },
                             shape = RoundedCornerShape(12.dp),
-                            color = if (incomeType == "salary") Color(0xFF10B981).copy(alpha = 0.15f) else Color(0xFFF1F5F9),
+                            color = if (incomeType == "salary") successGreen.copy(alpha = 0.2f) else mediumGray,
                             border = if (incomeType == "salary") 
-                                androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF10B981)) 
-                            else null
+                                androidx.compose.foundation.BorderStroke(2.dp, successGreen) 
+                            else androidx.compose.foundation.BorderStroke(1.dp, mediumGray)
                         ) {
                             Row(
                                 modifier = Modifier.padding(12.dp),
@@ -379,7 +434,7 @@ fun AddIncomeDialog(
                                 Text("💰 ", style = MaterialTheme.typography.bodyMedium)
                                 Text(
                                     "Salaire",
-                                    color = if (incomeType == "salary") Color(0xFF10B981) else Color(0xFF64748B),
+                                    color = if (incomeType == "salary") successGreen else lightGray,
                                     fontWeight = if (incomeType == "salary") FontWeight.SemiBold else FontWeight.Normal
                                 )
                             }
@@ -391,10 +446,10 @@ fun AddIncomeDialog(
                                 .weight(1f)
                                 .clickable { incomeType = "other" },
                             shape = RoundedCornerShape(12.dp),
-                            color = if (incomeType == "other") Color(0xFF667EEA).copy(alpha = 0.15f) else Color(0xFFF1F5F9),
+                            color = if (incomeType == "other") purpleColor.copy(alpha = 0.2f) else mediumGray,
                             border = if (incomeType == "other") 
-                                androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF667EEA)) 
-                            else null
+                                androidx.compose.foundation.BorderStroke(2.dp, purpleColor) 
+                            else androidx.compose.foundation.BorderStroke(1.dp, mediumGray)
                         ) {
                             Row(
                                 modifier = Modifier.padding(12.dp),
@@ -404,7 +459,7 @@ fun AddIncomeDialog(
                                 Text("💵 ", style = MaterialTheme.typography.bodyMedium)
                                 Text(
                                     "Autre",
-                                    color = if (incomeType == "other") Color(0xFF667EEA) else Color(0xFF64748B),
+                                    color = if (incomeType == "other") purpleColor else lightGray,
                                     fontWeight = if (incomeType == "other") FontWeight.SemiBold else FontWeight.Normal
                                 )
                             }
@@ -416,8 +471,8 @@ fun AddIncomeDialog(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text(if (incomeType == "salary") "Source (ex: Employeur)" else "Description", color = Color(0xFF64748B)) },
-                    placeholder = { Text(if (incomeType == "salary") "Nom de l'entreprise" else "Ex: Freelance, Prime...", color = Color(0xFF94A3B8)) },
+                    label = { Text(if (incomeType == "salary") "Source (ex: Employeur)" else "Description") },
+                    placeholder = { Text(if (incomeType == "salary") "Nom de l'entreprise" else "Ex: Freelance, Prime...") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = textFieldColors,
@@ -428,8 +483,8 @@ fun AddIncomeDialog(
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it.filter { c -> c.isDigit() || c == '.' } },
-                    label = { Text("Montant (FCFA)", color = Color(0xFF64748B)) },
-                    placeholder = { Text("0", color = Color(0xFF94A3B8)) },
+                    label = { Text("Montant (FCFA)") },
+                    placeholder = { Text("0") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = textFieldColors,
@@ -440,7 +495,7 @@ fun AddIncomeDialog(
                 if (incomeType == "salary") {
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = Color(0xFF10B981).copy(alpha = 0.1f)
+                        color = successGreen.copy(alpha = 0.15f)
                     ) {
                         Row(
                             modifier = Modifier.padding(12.dp),
@@ -451,7 +506,7 @@ fun AddIncomeDialog(
                             Text(
                                 text = "Le salaire est requis pour pouvoir enregistrer des dépenses ce mois.",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFF047857)
+                                color = successGreen
                             )
                         }
                     }
@@ -475,10 +530,10 @@ fun AddIncomeDialog(
                 },
                 enabled = description.isNotBlank() && amount.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF10B981),
-                    contentColor = Color.White,
-                    disabledContainerColor = Color(0xFFCBD5E1),
-                    disabledContentColor = Color.White
+                    containerColor = goldColor,
+                    contentColor = Color.Black,
+                    disabledContainerColor = mediumGray,
+                    disabledContentColor = lightGray
                 ),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.height(44.dp)
@@ -488,8 +543,95 @@ fun AddIncomeDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler", color = Color(0xFF64748B), fontWeight = FontWeight.Medium)
+                Text("Annuler", color = lightGray, fontWeight = FontWeight.Medium)
             }
         }
     )
+}
+
+@Composable
+fun SyncIndicator(
+    isServerAvailable: Boolean,
+    syncStatus: SyncStatus,
+    pendingCount: Int,
+    onSyncClick: () -> Unit
+) {
+    val goldColor = Color(0xFFD4AF37)
+    val successGreen = Color(0xFF10B981)
+    val warningOrange = Color(0xFFF59E0B)
+    val grayColor = Color(0xFF6B7280)
+    
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Indicateur de statut
+        when {
+            syncStatus == SyncStatus.SYNCING -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    strokeWidth = 2.dp,
+                    color = goldColor
+                )
+                Text(
+                    text = "Sync...",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = goldColor
+                )
+            }
+            !isServerAvailable -> {
+                Icon(
+                    Icons.Default.CloudOff,
+                    contentDescription = "Hors ligne",
+                    modifier = Modifier.size(18.dp),
+                    tint = grayColor
+                )
+                if (pendingCount > 0) {
+                    Surface(
+                        shape = CircleShape,
+                        color = warningOrange
+                    ) {
+                        Text(
+                            text = "$pendingCount",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
+            pendingCount > 0 -> {
+                IconButton(
+                    onClick = onSyncClick,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Sync,
+                        contentDescription = "Synchroniser",
+                        modifier = Modifier.size(18.dp),
+                        tint = goldColor
+                    )
+                }
+                Surface(
+                    shape = CircleShape,
+                    color = goldColor
+                ) {
+                    Text(
+                        text = "$pendingCount",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.Black,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+            else -> {
+                Icon(
+                    Icons.Default.CloudDone,
+                    contentDescription = "Synchronisé",
+                    modifier = Modifier.size(18.dp),
+                    tint = successGreen
+                )
+            }
+        }
+    }
 }

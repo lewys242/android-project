@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Room
 import com.mbongo.app.data.local.MbongoDatabase
 import com.mbongo.app.data.local.dao.*
+import com.mbongo.app.data.remote.ApiClient
+import com.mbongo.app.data.remote.ApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,8 +30,18 @@ object DatabaseModule {
             "mbongo_database"
         )
             .addCallback(MbongoDatabase.Callback(databaseProvider))
-            .addMigrations(MbongoDatabase.MIGRATION_1_2)
+            .addMigrations(
+                MbongoDatabase.MIGRATION_1_2, 
+                MbongoDatabase.MIGRATION_2_3,
+                MbongoDatabase.MIGRATION_3_4
+            )
             .build()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideApiService(): ApiService {
+        return ApiClient.apiService
     }
 
     @Provides

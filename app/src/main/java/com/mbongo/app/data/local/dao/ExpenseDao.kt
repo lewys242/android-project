@@ -92,6 +92,10 @@ interface ExpenseDao {
         ORDER BY monthNum
     """)
     suspend fun getMonthlyTotalsForYear(year: String): List<MonthlyTotal>
+    
+    // Compter le nombre de dépenses pour un mois
+    @Query("SELECT COUNT(*) FROM expenses WHERE strftime('%Y-%m', date) = :month")
+    suspend fun getExpenseCountByMonth(month: String): Int
 }
 
 data class CategoryExpenseTotal(

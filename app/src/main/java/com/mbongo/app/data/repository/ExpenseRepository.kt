@@ -46,4 +46,7 @@ class ExpenseRepository @Inject constructor(
     
     suspend fun getMonthlyTotalsForYear(year: String): List<MonthlyTotal> =
         expenseDao.getMonthlyTotalsForYear(year)
+    
+    suspend fun getExpenseCountByMonth(month: String): Int =
+        expenseDao.getExpenseCountByMonth(month)
 }

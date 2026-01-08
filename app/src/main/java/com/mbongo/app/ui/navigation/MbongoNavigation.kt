@@ -56,8 +56,8 @@ fun MainAppContent(authViewModel: AuthViewModel) {
     
     val bottomNavItems = listOf(
         BottomNavItem(Screen.Dashboard.route, "Accueil", Icons.Default.Home),
-        BottomNavItem(Screen.Expenses.route, "Dépenses", Icons.Default.ShoppingCart),
         BottomNavItem(Screen.Incomes.route, "Revenus", Icons.Default.AttachMoney),
+        BottomNavItem(Screen.Expenses.route, "Dépenses", Icons.Default.ShoppingCart),
         BottomNavItem(Screen.Loans.route, "Prêts", Icons.Default.AccountBalance),
         BottomNavItem(Screen.Statistics.route, "Stats", Icons.Default.BarChart)
     )

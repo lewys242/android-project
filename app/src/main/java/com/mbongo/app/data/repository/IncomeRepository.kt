@@ -37,4 +37,16 @@ class IncomeRepository @Inject constructor(
     suspend fun updateIncome(income: Income) = incomeDao.updateIncome(income)
     
     suspend fun deleteIncome(income: Income) = incomeDao.deleteIncome(income)
+    
+    // ===== Méthodes pour la synchronisation =====
+    
+    suspend fun getUnsyncedIncomes(): List<Income> = incomeDao.getUnsyncedIncomes()
+    
+    suspend fun getPendingDeleteIncomes(): List<Income> = incomeDao.getPendingDeleteIncomes()
+    
+    suspend fun markAsSynced(localId: Long, remoteId: Long) = incomeDao.markAsSynced(localId, remoteId)
+    
+    suspend fun markForDeletion(id: Long) = incomeDao.markForDeletion(id)
+    
+    suspend fun deleteSyncedPendingDelete() = incomeDao.deleteSyncedPendingDelete()
 }

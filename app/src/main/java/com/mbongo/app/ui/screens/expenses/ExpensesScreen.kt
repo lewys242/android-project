@@ -99,8 +99,9 @@ fun ExpensesScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFFEF3C7)
-                    )
+                        containerColor = Color(0xFF3A3A3A)
+                    ),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Row(
                         modifier = Modifier
@@ -112,15 +113,15 @@ fun ExpensesScreen(
                         Text(text = "⚠️", style = MaterialTheme.typography.headlineSmall)
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Salaire requis",
+                                text = "Revenu requis",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFFB45309)
+                                color = Color(0xFFF59E0B)
                             )
                             Text(
-                                text = "Enregistrez d'abord un salaire pour ce mois",
+                                text = "Enregistrez d'abord un revenu pour ce mois",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFB45309).copy(alpha = 0.8f)
+                                color = Color(0xFFCCCCCC)
                             )
                         }
                     }
@@ -128,42 +129,62 @@ fun ExpensesScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Total Card
+            // Total Card - Thème sombre
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
+                    containerColor = Color(0xFF2A2A2A)
+                ),
+                shape = RoundedCornerShape(16.dp)
             ) {
-                Column(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp)
+                        .padding(20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Total dépenses",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.7f)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "${String.format("%,.0f", totalExpenses)} FCFA",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.error,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Column {
+                        Text(
+                            text = "Total dépenses",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color(0xFFCCCCCC)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "${String.format("%,.0f", totalExpenses)} FCFA",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = Color(0xFFF59E0B),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Surface(
+                        modifier = Modifier.size(48.dp),
+                        shape = CircleShape,
+                        color = Color(0xFFF59E0B).copy(alpha = 0.2f)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.ShoppingCart,
+                                contentDescription = null,
+                                tint = Color(0xFFF59E0B),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Expenses List
+            // Expenses List - État vide thème sombre
             if (expenses.isEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
+                        containerColor = Color(0xFF2A2A2A)
+                    ),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Box(
                         modifier = Modifier
@@ -175,21 +196,20 @@ fun ExpensesScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.ShoppingCart,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            Text(
+                                text = "🛒",
+                                style = MaterialTheme.typography.displayMedium
                             )
                             Text(
                                 text = "Aucune dépense",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color.White,
+                                fontWeight = FontWeight.Medium
                             )
                             Text(
                                 text = if (hasSalary) "Appuyez sur + pour ajouter" else "Ajoutez d'abord un salaire",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                color = Color(0xFFCCCCCC)
                             )
                         }
                     }
@@ -229,14 +249,18 @@ fun ExpensesScreen(
             )
         }
         
-        // Dialogue d'avertissement salaire requis
+        // Dialogue d'avertissement revenu requis
         if (showNoSalaryDialog) {
             AlertDialog(
                 onDismissRequest = { showNoSalaryDialog = false },
+                containerColor = Color(0xFF2A2A2A),
                 icon = { Text("💰", style = MaterialTheme.typography.headlineLarge) },
-                title = { Text("Salaire requis") },
+                title = { Text("Revenu requis", color = Color(0xFFD4AF37), fontWeight = FontWeight.Bold) },
                 text = { 
-                    Text("Vous devez d'abord enregistrer un salaire pour ce mois avant de pouvoir ajouter des dépenses.")
+                    Text(
+                        "Vous devez d'abord enregistrer un revenu pour ce mois avant de pouvoir ajouter des dépenses.",
+                        color = Color(0xFFCCCCCC)
+                    )
                 },
                 confirmButton = {
                     TextButton(
@@ -245,12 +269,12 @@ fun ExpensesScreen(
                             // TODO: Navigation vers écran revenus
                         }
                     ) {
-                        Text("Ajouter un salaire")
+                        Text("Ajouter un revenu", color = Color(0xFFD4AF37))
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showNoSalaryDialog = false }) {
-                        Text("Annuler")
+                        Text("Annuler", color = Color(0xFFCCCCCC))
                     }
                 }
             )
@@ -276,8 +300,9 @@ fun ExpenseItem(
             .fillMaxWidth()
             .clickable { },
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+            containerColor = Color(0xFF2A2A2A)
+        ),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Row(
             modifier = Modifier
@@ -294,13 +319,13 @@ fun ExpenseItem(
                 Surface(
                     modifier = Modifier.size(48.dp),
                     shape = CircleShape,
-                    color = MaterialTheme.colorScheme.errorContainer
+                    color = Color(0xFFF59E0B).copy(alpha = 0.2f)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Default.ShoppingCart,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error,
+                            tint = Color(0xFFF59E0B),
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -310,13 +335,13 @@ fun ExpenseItem(
                     Text(
                         text = expense.description ?: "",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = Color.White,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
                         text = dateFormat.format(parsedDate ?: Date()),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color(0xFFCCCCCC)
                     )
                 }
             }
@@ -328,14 +353,14 @@ fun ExpenseItem(
                 Text(
                     text = "${String.format("%,.0f", expense.amount)} F",
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.error,
+                    color = Color(0xFFF59E0B),
                     fontWeight = FontWeight.Bold
                 )
                 IconButton(onClick = { showDeleteDialog = true }) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Supprimer",
-                        tint = MaterialTheme.colorScheme.error
+                        tint = Color(0xFFD4AF37)
                     )
                 }
             }
@@ -345,8 +370,9 @@ fun ExpenseItem(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Confirmer la suppression") },
-            text = { Text("Voulez-vous vraiment supprimer cette dépense ?") },
+            containerColor = Color(0xFF2A2A2A),
+            title = { Text("Confirmer la suppression", color = Color(0xFFD4AF37), fontWeight = FontWeight.Bold) },
+            text = { Text("Voulez-vous vraiment supprimer cette dépense ?", color = Color(0xFFCCCCCC)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -354,12 +380,12 @@ fun ExpenseItem(
                         showDeleteDialog = false
                     }
                 ) {
-                    Text("Supprimer", color = MaterialTheme.colorScheme.error)
+                    Text("Supprimer", color = Color(0xFFD4AF37))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Annuler")
+                    Text("Annuler", color = Color(0xFFCCCCCC))
                 }
             }
         )
@@ -379,29 +405,38 @@ fun AddExpenseDialog(
     var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
     var expanded by remember { mutableStateOf(false) }
     
-    // Couleurs pour les champs de texte - style web app
+    // Couleurs du thème sombre
+    val goldColor = Color(0xFFD4AF37)
+    val darkBackground = Color(0xFF2A2A2A)
+    val mediumGray = Color(0xFF3A3A3A)
+    val lightGray = Color(0xFFCCCCCC)
+    val errorRed = Color(0xFFEF4444)
+    
+    // Couleurs pour les champs de texte - thème sombre
     val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = Color(0xFF1E293B),
-        unfocusedTextColor = Color(0xFF1E293B),
-        cursorColor = Color(0xFF10B981),
-        focusedBorderColor = Color(0xFF10B981),
-        unfocusedBorderColor = Color(0xFFCBD5E1),
-        focusedLabelColor = Color(0xFF10B981),
-        unfocusedLabelColor = Color(0xFF64748B),
-        focusedContainerColor = Color.White,
-        unfocusedContainerColor = Color.White
+        focusedTextColor = Color.White,
+        unfocusedTextColor = Color.White,
+        cursorColor = goldColor,
+        focusedBorderColor = goldColor,
+        unfocusedBorderColor = mediumGray,
+        focusedLabelColor = goldColor,
+        unfocusedLabelColor = lightGray,
+        focusedContainerColor = mediumGray,
+        unfocusedContainerColor = mediumGray,
+        focusedPlaceholderColor = lightGray.copy(alpha = 0.5f),
+        unfocusedPlaceholderColor = lightGray.copy(alpha = 0.5f)
     )
 
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.fillMaxWidth(),
-        containerColor = Color.White,
-        titleContentColor = Color(0xFF1E293B),
+        containerColor = darkBackground,
+        titleContentColor = Color.White,
         title = { 
             Text(
                 "Nouvelle dépense",
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E293B)
+                color = goldColor
             ) 
         },
         text = {
@@ -413,8 +448,8 @@ fun AddExpenseDialog(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Description", color = Color(0xFF64748B)) },
-                    placeholder = { Text("Ex: Restaurant, courses...", color = Color(0xFF94A3B8)) },
+                    label = { Text("Description") },
+                    placeholder = { Text("Ex: Restaurant, courses...") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = textFieldColors,
@@ -425,20 +460,20 @@ fun AddExpenseDialog(
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it.filter { c -> c.isDigit() || c == '.' } },
-                    label = { Text("Montant (FCFA)", color = Color(0xFF64748B)) },
-                    placeholder = { Text("0", color = Color(0xFF94A3B8)) },
+                    label = { Text("Montant (FCFA)") },
+                    placeholder = { Text("0") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = textFieldColors,
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                // Sélecteur de catégorie - Style web app
+                // Sélecteur de catégorie - Thème sombre
                 Column {
                     Text(
                         "Catégorie",
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFF64748B),
+                        color = lightGray,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     
@@ -454,9 +489,9 @@ fun AddExpenseDialog(
                             shape = RoundedCornerShape(12.dp),
                             border = androidx.compose.foundation.BorderStroke(
                                 1.dp,
-                                if (expanded) Color(0xFF10B981) else Color(0xFFCBD5E1)
+                                if (expanded) goldColor else mediumGray
                             ),
-                            color = Color.White
+                            color = mediumGray
                         ) {
                             Row(
                                 modifier = Modifier
@@ -477,30 +512,30 @@ fun AddExpenseDialog(
                                         )
                                         Text(
                                             selectedCategory.name,
-                                            color = Color(0xFF1E293B),
+                                            color = Color.White,
                                             fontWeight = FontWeight.Medium
                                         )
                                     }
                                 } else {
                                     Text(
                                         "Sélectionner une catégorie",
-                                        color = Color(0xFF94A3B8)
+                                        color = lightGray.copy(alpha = 0.5f)
                                     )
                                 }
                                 Icon(
                                     imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                                     contentDescription = null,
-                                    tint = Color(0xFF64748B)
+                                    tint = lightGray
                                 )
                             }
                         }
                         
-                        // Menu déroulant avec fond blanc
+                        // Menu déroulant avec fond sombre
                         DropdownMenu(
                             expanded = expanded,
                             onDismissRequest = { expanded = false },
                             modifier = Modifier
-                                .background(Color.White)
+                                .background(darkBackground)
                                 .heightIn(max = 300.dp)
                         ) {
                             categories.forEach { category ->
@@ -517,8 +552,8 @@ fun AddExpenseDialog(
                                                 color = try {
                                                     Color(android.graphics.Color.parseColor(category.color))
                                                 } catch (e: Exception) {
-                                                    Color(0xFF10B981)
-                                                }.copy(alpha = 0.15f)
+                                                    goldColor
+                                                }.copy(alpha = 0.2f)
                                             ) {
                                                 Box(contentAlignment = Alignment.Center) {
                                                     Text(
@@ -529,7 +564,7 @@ fun AddExpenseDialog(
                                             }
                                             Text(
                                                 category.name,
-                                                color = Color(0xFF1E293B),
+                                                color = Color.White,
                                                 fontWeight = FontWeight.Medium
                                             )
                                         }
@@ -540,9 +575,9 @@ fun AddExpenseDialog(
                                     },
                                     modifier = Modifier.background(
                                         if (selectedCategoryId == category.id) 
-                                            Color(0xFF10B981).copy(alpha = 0.1f) 
+                                            goldColor.copy(alpha = 0.2f) 
                                         else 
-                                            Color.White
+                                            darkBackground
                                     )
                                 )
                             }
@@ -563,14 +598,15 @@ fun AddExpenseDialog(
                                 date = java.text.SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(java.util.Date())
                             )
                         )
+                        onDismiss()
                     }
                 },
                 enabled = description.isNotBlank() && amount.isNotBlank() && selectedCategoryId != null,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF10B981),
-                    contentColor = Color.White,
-                    disabledContainerColor = Color(0xFFCBD5E1),
-                    disabledContentColor = Color.White
+                    containerColor = goldColor,
+                    contentColor = Color.Black,
+                    disabledContainerColor = mediumGray,
+                    disabledContentColor = lightGray
                 ),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.height(44.dp)
@@ -580,7 +616,7 @@ fun AddExpenseDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Annuler", color = Color(0xFF64748B), fontWeight = FontWeight.Medium)
+                Text("Annuler", color = lightGray, fontWeight = FontWeight.Medium)
             }
         }
     )

@@ -29,12 +29,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.random.Random
 
-// Couleurs personnalisées
+// Couleurs personnalisées - exactement comme le web
 private val DarkText = Color(0xFF1e293b)
 private val GrayText = Color(0xFF64748b)
-private val GreenPrimary = Color(0xFF10B981)
-private val GreenDark = Color(0xFF059669)
+private val OrangePrimary = Color(0xFFf59e0b)
+private val OrangeDark = Color(0xFFd97706)
 private val ErrorRed = Color(0xFFEF4444)
+private val GoldBorder = Color(0xFFd4af37)
+private val CardBackground = Color(0xFF2a2a2a)
+private val InputBackground = Color(0xFF1a1a1a)
+private val WhiteText = Color(0xFFffffff)
 
 @Composable
 fun LoginScreen(
@@ -49,39 +53,39 @@ fun LoginScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     
-    val gradientColors = listOf(
-        Color(0xFF1a1a2e),
-        Color(0xFF16213e),
-        Color(0xFF0f3460)
-    )
+    // Couleurs exactes comme le web - fond NOIR
+    val darkBackground = Color(0xFF1a1a1a)
     
-    // Couleurs des champs de texte - TEXTE NOIR LISIBLE
+    // Couleurs des champs de texte - TEXTE BLANC sur fond sombre
     val textFieldColors = OutlinedTextFieldDefaults.colors(
-        // Texte saisi - NOIR
-        focusedTextColor = DarkText,
-        unfocusedTextColor = DarkText,
+        // Texte saisi - BLANC
+        focusedTextColor = WhiteText,
+        unfocusedTextColor = WhiteText,
         // Bordure
-        focusedBorderColor = GreenPrimary,
-        unfocusedBorderColor = Color(0xFFcbd5e1),
+        focusedBorderColor = GoldBorder,
+        unfocusedBorderColor = Color(0xFF3a3a3a),
         // Label
-        focusedLabelColor = GreenPrimary,
-        unfocusedLabelColor = GrayText,
+        focusedLabelColor = GoldBorder,
+        unfocusedLabelColor = WhiteText,
         // Icônes
-        focusedLeadingIconColor = GreenPrimary,
-        unfocusedLeadingIconColor = GrayText,
-        focusedTrailingIconColor = GrayText,
-        unfocusedTrailingIconColor = GrayText,
+        focusedLeadingIconColor = GoldBorder,
+        unfocusedLeadingIconColor = WhiteText,
+        focusedTrailingIconColor = WhiteText,
+        unfocusedTrailingIconColor = WhiteText,
         // Curseur
-        cursorColor = GreenPrimary,
+        cursorColor = GoldBorder,
         // Placeholder
         focusedPlaceholderColor = GrayText,
-        unfocusedPlaceholderColor = GrayText
+        unfocusedPlaceholderColor = GrayText,
+        // Container/Background
+        focusedContainerColor = InputBackground,
+        unfocusedContainerColor = InputBackground
     )
     
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(gradientColors))
+            .background(darkBackground)
     ) {
         // Symboles monétaires animés en arrière-plan
         MoneySymbolsBackground()
@@ -96,14 +100,15 @@ fun LoginScreen(
         ) {
             Spacer(modifier = Modifier.height(60.dp))
             
-            // Carte de login
+            // Carte de login - fond sombre avec bordure dorée
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White
+                    containerColor = CardBackground
                 ),
-                shape = RoundedCornerShape(24.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+                border = androidx.compose.foundation.BorderStroke(2.dp, GoldBorder)
             ) {
                 Column(
                     modifier = Modifier
@@ -116,20 +121,24 @@ fun LoginScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        // Logo circulaire
+                        // Logo circulaire orange
                         Box(
                             modifier = Modifier
-                                .size(64.dp)
-                                .clip(CircleShape)
+                                .size(50.dp)
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(
-                                    Brush.linearGradient(listOf(GreenPrimary, GreenDark))
+                                    Brush.linearGradient(
+                                        colors = listOf(OrangePrimary, OrangeDark),
+                                        start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                                        end = androidx.compose.ui.geometry.Offset(100f, 100f)
+                                    )
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = "M",
                                 color = Color.White,
-                                fontSize = 36.sp,
+                                fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -139,14 +148,14 @@ fun LoginScreen(
                         Column {
                             Text(
                                 text = "Mbongo",
-                                fontSize = 32.sp,
+                                fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = DarkText
+                                color = WhiteText
                             )
                             Text(
                                 text = "Gérez facilement vos dépenses",
                                 fontSize = 14.sp,
-                                color = GrayText
+                                color = GoldBorder
                             )
                         }
                     }
@@ -164,11 +173,11 @@ fun LoginScreen(
                                 Icon(Icons.Default.Person, contentDescription = null) 
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(8.dp),
                             colors = textFieldColors,
                             textStyle = TextStyle(
-                                color = DarkText,
-                                fontSize = 16.sp
+                                color = WhiteText,
+                                fontSize = 14.sp
                             ),
                             singleLine = true
                         )
@@ -186,12 +195,12 @@ fun LoginScreen(
                             Icon(Icons.Default.Email, contentDescription = null) 
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(8.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                         colors = textFieldColors,
                         textStyle = TextStyle(
-                            color = DarkText,
-                            fontSize = 16.sp
+                            color = WhiteText,
+                            fontSize = 14.sp
                         ),
                         singleLine = true
                     )
@@ -218,7 +227,7 @@ fun LoginScreen(
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(8.dp),
                         visualTransformation = if (passwordVisible) 
                             VisualTransformation.None 
                         else 
@@ -226,8 +235,8 @@ fun LoginScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         colors = textFieldColors,
                         textStyle = TextStyle(
-                            color = DarkText,
-                            fontSize = 16.sp
+                            color = WhiteText,
+                            fontSize = 14.sp
                         ),
                         singleLine = true
                     )
@@ -255,7 +264,7 @@ fun LoginScreen(
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(8.dp),
                             visualTransformation = if (confirmPasswordVisible) 
                                 VisualTransformation.None 
                             else 
@@ -263,8 +272,8 @@ fun LoginScreen(
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                             colors = textFieldColors,
                             textStyle = TextStyle(
-                                color = DarkText,
-                                fontSize = 16.sp
+                                color = WhiteText,
+                                fontSize = 14.sp
                             ),
                             singleLine = true
                         )
@@ -284,7 +293,7 @@ fun LoginScreen(
                     
                     Spacer(modifier = Modifier.height(24.dp))
                     
-                    // Bouton de connexion/inscription
+                    // Bouton de connexion/inscription - orange
                     Button(
                         onClick = {
                             when {
@@ -305,20 +314,31 @@ fun LoginScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = GreenPrimary
+                            containerColor = Color.Transparent
                         ),
-                        elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 4.dp
-                        )
+                        contentPadding = PaddingValues(0.dp)
                     ) {
-                        Text(
-                            text = if (isLoginMode) "Se connecter" else "Créer un compte",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.linearGradient(
+                                        colors = listOf(OrangePrimary, OrangeDark),
+                                        start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                                        end = androidx.compose.ui.geometry.Offset(200f, 200f)
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (isLoginMode) "Se connecter" else "Créer un compte",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White
+                            )
+                        }
                     }
                     
                     Spacer(modifier = Modifier.height(24.dp))
@@ -330,12 +350,12 @@ fun LoginScreen(
                     ) {
                         Text(
                             text = if (isLoginMode) "Pas de compte ? " else "Déjà un compte ? ",
-                            color = GrayText,
+                            color = WhiteText,
                             fontSize = 14.sp
                         )
                         Text(
                             text = if (isLoginMode) "Créer un compte" else "Se connecter",
-                            color = GreenPrimary,
+                            color = GoldBorder,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
                             modifier = Modifier.clickable {
@@ -359,20 +379,33 @@ fun LoginScreen(
 
 @Composable
 fun MoneySymbolsBackground() {
+    // Symboles dorés et argentés comme le web
     val symbols = remember {
         listOf(
-            SymbolData("$", 0.05f, 8000),
-            SymbolData("€", 0.15f, 9000),
-            SymbolData("£", 0.25f, 7500),
-            SymbolData("¥", 0.35f, 8500),
-            SymbolData("₹", 0.45f, 9500),
-            SymbolData("FCFA", 0.55f, 10000),
-            SymbolData("₿", 0.65f, 7000),
-            SymbolData("💰", 0.75f, 8200),
-            SymbolData("💎", 0.85f, 9200),
-            SymbolData("🪙", 0.95f, 8800),
-            SymbolData("₩", 0.10f, 7800),
-            SymbolData("₽", 0.90f, 8600)
+            SymbolData("$", 0.15f, 0.10f, 8000, true),
+            SymbolData("€", 0.85f, 0.20f, 9000, false),
+            SymbolData("£", 0.05f, 0.35f, 7500, true),
+            SymbolData("¥", 0.75f, 0.45f, 8500, true),
+            SymbolData("₹", 0.25f, 0.60f, 9500, true),
+            SymbolData("FCFA", 0.90f, 0.75f, 10000, true),
+            SymbolData("₿", 0.60f, 0.15f, 7000, false),
+            SymbolData("💰", 0.45f, 0.12f, 8200, false),
+            SymbolData("💎", 0.78f, 0.28f, 9200, false),
+            SymbolData("🪙", 0.12f, 0.42f, 8800, true),
+            SymbolData("₩", 0.85f, 0.58f, 7800, false),
+            SymbolData("₽", 0.32f, 0.72f, 8600, true),
+            SymbolData("₺", 0.68f, 0.08f, 9000, true),
+            SymbolData("₸", 0.38f, 0.88f, 8400, false),
+            SymbolData("$", 0.52f, 0.06f, 7600, true),
+            SymbolData("€", 0.08f, 0.31f, 8800, false),
+            SymbolData("£", 0.92f, 0.48f, 9200, true),
+            SymbolData("¥", 0.28f, 0.17f, 7400, false),
+            SymbolData("₹", 0.82f, 0.85f, 8200, true),
+            SymbolData("💰", 0.55f, 0.55f, 9600, true),
+            SymbolData("💎", 0.18f, 0.78f, 8000, false),
+            SymbolData("🪙", 0.72f, 0.32f, 7800, true),
+            SymbolData("₩", 0.42f, 0.92f, 9400, false),
+            SymbolData("₽", 0.88f, 0.38f, 8600, true)
         )
     }
     
@@ -386,16 +419,23 @@ fun MoneySymbolsBackground() {
 data class SymbolData(
     val symbol: String,
     val xPosition: Float,
-    val duration: Int
+    val yStart: Float,
+    val duration: Int,
+    val isGold: Boolean
 )
 
 @Composable
 fun AnimatedMoneySymbol(data: SymbolData) {
-    val infiniteTransition = rememberInfiniteTransition(label = "symbol_${data.symbol}")
+    val infiniteTransition = rememberInfiniteTransition(label = "symbol_${data.symbol}_${data.xPosition}")
+    
+    // Couleurs dorées et argentées comme le web
+    val goldColor = Color(0xFFFFD700).copy(alpha = 0.4f)
+    val silverColor = Color(0xFFC0C0C0).copy(alpha = 0.35f)
+    val baseColor = if (data.isGold) goldColor else silverColor
     
     val offsetY by infiniteTransition.animateFloat(
-        initialValue = -100f,
-        targetValue = 1200f,
+        initialValue = data.yStart * 1000f - 100f,
+        targetValue = data.yStart * 1000f + 1200f,
         animationSpec = infiniteRepeatable(
             animation = tween(
                 durationMillis = data.duration,
@@ -407,10 +447,10 @@ fun AnimatedMoneySymbol(data: SymbolData) {
     )
     
     val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.15f,
-        targetValue = 0.4f,
+        initialValue = if (data.isGold) 0.4f else 0.3f,
+        targetValue = if (data.isGold) 0.5f else 0.4f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2000),
+            animation = tween(3000),
             repeatMode = RepeatMode.Reverse
         ),
         label = "alpha_${data.symbol}"
@@ -419,16 +459,22 @@ fun AnimatedMoneySymbol(data: SymbolData) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .offset(y = offsetY.dp)
+            .offset(
+                x = (data.xPosition * 350).dp,
+                y = offsetY.dp
+            )
     ) {
         Text(
             text = data.symbol,
-            color = Color.White.copy(alpha = alpha),
-            fontSize = if (data.symbol == "FCFA") 16.sp else 24.sp,
+            color = baseColor.copy(alpha = alpha),
+            fontSize = if (data.symbol == "FCFA") 20.sp else 32.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = (data.xPosition * 350).dp)
+            style = androidx.compose.ui.text.TextStyle(
+                shadow = androidx.compose.ui.graphics.Shadow(
+                    color = if (data.isGold) goldColor else silverColor,
+                    blurRadius = 10f
+                )
+            )
         )
     }
 }

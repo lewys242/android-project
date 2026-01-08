@@ -84,7 +84,7 @@ fun LoansScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Stats Row
+            // Stats Row - Thème sombre
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -92,8 +92,9 @@ fun LoansScreen(
                 Card(
                     modifier = Modifier.weight(1f),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
+                        containerColor = Color(0xFF2A2A2A)
+                    ),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(
                         modifier = Modifier
@@ -103,13 +104,13 @@ fun LoansScreen(
                         Text(
                             text = "Total prêté",
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            color = Color(0xFFCCCCCC)
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = formatCurrency(totalLoanAmount),
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = Color(0xFFD4AF37),
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -118,8 +119,9 @@ fun LoansScreen(
                 Card(
                     modifier = Modifier.weight(1f),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
+                        containerColor = Color(0xFF2A2A2A)
+                    ),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(
                         modifier = Modifier
@@ -129,13 +131,13 @@ fun LoansScreen(
                         Text(
                             text = "Restant",
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.7f)
+                            color = Color(0xFFCCCCCC)
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = formatCurrency(totalRemainingAmount),
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.error,
+                            color = Color(0xFFF59E0B),
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -157,8 +159,9 @@ fun LoansScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
+                        containerColor = Color(0xFF2A2A2A)
+                    ),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Box(
                         modifier = Modifier
@@ -170,21 +173,20 @@ fun LoansScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.AccountBalance,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            Text(
+                                text = "🏦",
+                                style = MaterialTheme.typography.displayMedium
                             )
                             Text(
                                 text = "Aucun prêt",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color.White,
+                                fontWeight = FontWeight.Medium
                             )
                             Text(
                                 text = "Appuyez sur + pour ajouter",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                color = Color(0xFFCCCCCC)
                             )
                         }
                     }
@@ -202,7 +204,7 @@ fun LoansScreen(
                             Text(
                                 text = "Prêts en cours (${activeLoans.size})",
                                 style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = Color(0xFFD4AF37),
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -290,7 +292,7 @@ fun LoanItemEnhanced(
             containerColor = if (isPaid) 
                 Color(0xFF10B981).copy(alpha = 0.1f) 
             else 
-                MaterialTheme.colorScheme.surface
+                Color(0xFF2A2A2A)
         ),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -313,13 +315,13 @@ fun LoanItemEnhanced(
                         modifier = Modifier.size(48.dp),
                         shape = CircleShape,
                         color = if (isPaid) Color(0xFF10B981).copy(alpha = 0.2f) 
-                               else MaterialTheme.colorScheme.primaryContainer
+                               else Color(0xFFD4AF37).copy(alpha = 0.2f)
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = if (isPaid) Icons.Default.CheckCircle else Icons.Default.AccountBalance,
                                 contentDescription = null,
-                                tint = if (isPaid) Color(0xFF10B981) else MaterialTheme.colorScheme.primary,
+                                tint = if (isPaid) Color(0xFF10B981) else Color(0xFFD4AF37),
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -329,13 +331,13 @@ fun LoanItemEnhanced(
                         Text(
                             text = formatCurrency(loan.totalDue),
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = Color.White,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = loan.purpose ?: loan.lender ?: "Prêt",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color(0xFFCCCCCC)
                         )
                     }
                 }
@@ -345,7 +347,7 @@ fun LoanItemEnhanced(
                         Icon(
                             imageVector = if (showDetails) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                             contentDescription = "Détails",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = Color(0xFFCCCCCC)
                         )
                     }
                     
@@ -356,19 +358,19 @@ fun LoanItemEnhanced(
                     }
                     
                     IconButton(onClick = { showDeleteDialog = true }, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Default.Delete, contentDescription = "Supprimer", tint = MaterialTheme.colorScheme.error)
+                        Icon(Icons.Default.Delete, contentDescription = "Supprimer", tint = Color(0xFFD4AF37))
                     }
                 }
             }
 
             AnimatedVisibility(visible = showDetails) {
                 Column(modifier = Modifier.padding(top = 12.dp)) {
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    Divider(modifier = Modifier.padding(vertical = 8.dp), color = Color(0xFF3A3A3A))
                     
                     Text(
                         text = "Capital: ${formatCurrency(loan.principal)} + Intérêts: ${formatCurrency(loan.totalInterest)}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color(0xFFCCCCCC)
                     )
                     
                     Spacer(modifier = Modifier.height(8.dp))
@@ -376,26 +378,26 @@ fun LoanItemEnhanced(
                     Text(
                         text = "Taux: ${String.format("%.2f", loan.interestRate)}% · Durée: ${loan.termMonths} mois",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color(0xFFCCCCCC)
                     )
                     
                     Spacer(modifier = Modifier.height(12.dp))
                     
-                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))) {
+                    Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF3A3A3A))) {
                         Column(modifier = Modifier.padding(12.dp)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("🏦 Intérêts:", style = MaterialTheme.typography.bodySmall)
-                                Text("${formatCurrency(loan.interestPaid)} / ${formatCurrency(loan.totalInterest)}", style = MaterialTheme.typography.bodySmall)
+                                Text("🏦 Intérêts:", style = MaterialTheme.typography.bodySmall, color = Color.White)
+                                Text("${formatCurrency(loan.interestPaid)} / ${formatCurrency(loan.totalInterest)}", style = MaterialTheme.typography.bodySmall, color = Color.White)
                             }
-                            Text("Restant: ${formatCurrency(loan.interestRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
+                            Text("Restant: ${formatCurrency(loan.interestRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFF59E0B))
                             
                             Spacer(modifier = Modifier.height(4.dp))
                             
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("💰 Capital:", style = MaterialTheme.typography.bodySmall)
-                                Text("${formatCurrency(loan.principalPaid)} / ${formatCurrency(loan.principal)}", style = MaterialTheme.typography.bodySmall)
+                                Text("💰 Capital:", style = MaterialTheme.typography.bodySmall, color = Color.White)
+                                Text("${formatCurrency(loan.principalPaid)} / ${formatCurrency(loan.principal)}", style = MaterialTheme.typography.bodySmall, color = Color.White)
                             }
-                            Text("Restant: ${formatCurrency(loan.principalRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
+                            Text("Restant: ${formatCurrency(loan.principalRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFF59E0B))
                         }
                     }
                 }
@@ -408,10 +410,10 @@ fun LoanItemEnhanced(
                     Text(
                         text = "Restant: ${formatCurrency(loan.interestRemaining + loan.principalRemaining)}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFFEF4444),
+                        color = Color(0xFFF59E0B),
                         fontWeight = FontWeight.Medium
                     )
-                    Text("${(loan.progress * 100).toInt()}%", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("${(loan.progress * 100).toInt()}%", style = MaterialTheme.typography.bodySmall, color = Color(0xFFCCCCCC))
                 }
                 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -420,7 +422,7 @@ fun LoanItemEnhanced(
                     progress = loan.progress,
                     modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
                     color = Color(0xFF10B981),
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    trackColor = Color(0xFF3A3A3A)
                 )
             }
         }
@@ -429,15 +431,16 @@ fun LoanItemEnhanced(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Confirmer la suppression") },
-            text = { Text("Voulez-vous vraiment supprimer ce prêt et tous ses remboursements ?") },
+            containerColor = Color(0xFF2A2A2A),
+            title = { Text("Confirmer la suppression", color = Color(0xFFD4AF37), fontWeight = FontWeight.Bold) },
+            text = { Text("Voulez-vous vraiment supprimer ce prêt et tous ses remboursements ?", color = Color(0xFFCCCCCC)) },
             confirmButton = {
                 TextButton(onClick = { onDelete(); showDeleteDialog = false }) {
-                    Text("Supprimer", color = MaterialTheme.colorScheme.error)
+                    Text("Supprimer", color = Color(0xFFD4AF37))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text("Annuler") }
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Annuler", color = Color(0xFFCCCCCC)) }
             }
         )
     }
@@ -452,44 +455,52 @@ fun RepaymentDialogForDisplay(
     var interestAmount by remember { mutableStateOf("") }
     var principalAmount by remember { mutableStateOf("") }
     
-    // Couleurs pour les champs de texte
+    // Couleurs du thème sombre
+    val darkBackground = Color(0xFF2A2A2A)
+    val mediumGray = Color(0xFF3A3A3A)
+    val lightGray = Color(0xFFCCCCCC)
+    val goldColor = Color(0xFFD4AF37)
+    val warningOrange = Color(0xFFF59E0B)
+    
+    // Couleurs pour les champs de texte - thème sombre
     val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = Color(0xFF1E293B),
-        unfocusedTextColor = Color(0xFF1E293B),
-        cursorColor = Color(0xFF10B981),
-        focusedBorderColor = Color(0xFF10B981),
-        unfocusedBorderColor = Color(0xFFCBD5E1),
-        focusedLabelColor = Color(0xFF10B981),
-        unfocusedLabelColor = Color(0xFF64748B),
-        focusedContainerColor = Color.White,
-        unfocusedContainerColor = Color.White
+        focusedTextColor = Color.White,
+        unfocusedTextColor = lightGray,
+        cursorColor = goldColor,
+        focusedBorderColor = goldColor,
+        unfocusedBorderColor = mediumGray,
+        focusedLabelColor = goldColor,
+        unfocusedLabelColor = lightGray,
+        focusedContainerColor = mediumGray,
+        unfocusedContainerColor = mediumGray
     )
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color.White,
-        titleContentColor = Color(0xFF1E293B),
+        containerColor = darkBackground,
+        titleContentColor = Color.White,
         title = { 
             Text(
                 "Remboursement - ${loan.purpose ?: loan.lender ?: "Prêt"}",
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = goldColor
             ) 
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9))) {
+                Card(colors = CardDefaults.cardColors(containerColor = mediumGray)) {
                     Column(Modifier.padding(12.dp)) {
-                        Text("Informations du prêt :", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
-                        Text("Capital: ${formatCurrency(loan.principal)} · Intérêt: ${loan.interestRate}%", style = MaterialTheme.typography.bodySmall, color = Color(0xFF64748B))
-                        Text("Intérêts restants: ${formatCurrency(loan.interestRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
-                        Text("Capital restant: ${formatCurrency(loan.principalRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
+                        Text("Informations du prêt :", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = goldColor)
+                        Text("Capital: ${formatCurrency(loan.principal)} · Intérêt: ${loan.interestRate}%", style = MaterialTheme.typography.bodySmall, color = lightGray)
+                        Text("Intérêts restants: ${formatCurrency(loan.interestRemaining)}", style = MaterialTheme.typography.bodySmall, color = warningOrange)
+                        Text("Capital restant: ${formatCurrency(loan.principalRemaining)}", style = MaterialTheme.typography.bodySmall, color = warningOrange)
                     }
                 }
                 
-                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFD4AF37).copy(alpha = 0.1f))) {
+                Card(colors = CardDefaults.cardColors(containerColor = goldColor.copy(alpha = 0.15f))) {
                     Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("💡")
-                        Text("Ce remboursement sera enregistré comme une dépense.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF856404))
+                        Text("Ce remboursement sera enregistré comme une dépense.", style = MaterialTheme.typography.bodySmall, color = goldColor)
                     }
                 }
                 
@@ -518,12 +529,12 @@ fun RepaymentDialogForDisplay(
                 val total = interest + principal
                 
                 if (total > 0) {
-                    Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF10B981).copy(alpha = 0.15f)), shape = RoundedCornerShape(8.dp)) {
+                    Card(colors = CardDefaults.cardColors(containerColor = goldColor.copy(alpha = 0.15f)), shape = RoundedCornerShape(8.dp)) {
                         Column(Modifier.padding(12.dp)) {
-                            Text("Récapitulatif :", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
-                            Text("Intérêts: ${formatCurrency(interest)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFF1E293B))
-                            Text("Capital: ${formatCurrency(principal)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFF1E293B))
-                            Text("Total: ${formatCurrency(total)}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
+                            Text("Récapitulatif :", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = goldColor)
+                            Text("Intérêts: ${formatCurrency(interest)}", style = MaterialTheme.typography.bodySmall, color = lightGray)
+                            Text("Capital: ${formatCurrency(principal)}", style = MaterialTheme.typography.bodySmall, color = lightGray)
+                            Text("Total: ${formatCurrency(total)}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = goldColor)
                         }
                     }
                 }
@@ -538,13 +549,13 @@ fun RepaymentDialogForDisplay(
                 },
                 enabled = (interestAmount.toDoubleOrNull() ?: 0.0) + (principalAmount.toDoubleOrNull() ?: 0.0) > 0,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF10B981),
-                    contentColor = Color.White
+                    containerColor = goldColor,
+                    contentColor = Color.Black
                 ),
                 shape = RoundedCornerShape(8.dp)
-            ) { Text("Confirmer") }
+            ) { Text("Confirmer", fontWeight = FontWeight.Bold) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler", color = Color(0xFF64748B)) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler", color = lightGray) } }
     )
 }
 
@@ -558,44 +569,52 @@ fun RepaymentDialog(
     var interestAmount by remember { mutableStateOf("") }
     var principalAmount by remember { mutableStateOf("") }
     
-    // Couleurs pour les champs de texte
+    // Couleurs du thème sombre
+    val darkBackground = Color(0xFF2A2A2A)
+    val mediumGray = Color(0xFF3A3A3A)
+    val lightGray = Color(0xFFCCCCCC)
+    val goldColor = Color(0xFFD4AF37)
+    val warningOrange = Color(0xFFF59E0B)
+    
+    // Couleurs pour les champs de texte - thème sombre
     val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = Color(0xFF1E293B),
-        unfocusedTextColor = Color(0xFF1E293B),
-        cursorColor = Color(0xFF10B981),
-        focusedBorderColor = Color(0xFF10B981),
-        unfocusedBorderColor = Color(0xFFCBD5E1),
-        focusedLabelColor = Color(0xFF10B981),
-        unfocusedLabelColor = Color(0xFF64748B),
-        focusedContainerColor = Color.White,
-        unfocusedContainerColor = Color.White
+        focusedTextColor = Color.White,
+        unfocusedTextColor = lightGray,
+        cursorColor = goldColor,
+        focusedBorderColor = goldColor,
+        unfocusedBorderColor = mediumGray,
+        focusedLabelColor = goldColor,
+        unfocusedLabelColor = lightGray,
+        focusedContainerColor = mediumGray,
+        unfocusedContainerColor = mediumGray
     )
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color.White,
-        titleContentColor = Color(0xFF1E293B),
+        containerColor = darkBackground,
+        titleContentColor = Color.White,
         title = { 
             Text(
                 "Remboursement - ${loan.purpose ?: loan.lender ?: "Prêt"}",
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = goldColor
             ) 
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9))) {
+                Card(colors = CardDefaults.cardColors(containerColor = mediumGray)) {
                     Column(Modifier.padding(12.dp)) {
-                        Text("Informations du prêt :", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
-                        Text("Capital: ${formatCurrency(loan.principal)} · Intérêt: ${loan.interestRate}%", style = MaterialTheme.typography.bodySmall, color = Color(0xFF64748B))
-                        Text("Intérêts restants: ${formatCurrency(breakdown.interestRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
-                        Text("Capital restant: ${formatCurrency(breakdown.principalRemaining)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
+                        Text("Informations du prêt :", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = goldColor)
+                        Text("Capital: ${formatCurrency(loan.principal)} · Intérêt: ${loan.interestRate}%", style = MaterialTheme.typography.bodySmall, color = lightGray)
+                        Text("Intérêts restants: ${formatCurrency(breakdown.interestRemaining)}", style = MaterialTheme.typography.bodySmall, color = warningOrange)
+                        Text("Capital restant: ${formatCurrency(breakdown.principalRemaining)}", style = MaterialTheme.typography.bodySmall, color = warningOrange)
                     }
                 }
                 
-                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFD4AF37).copy(alpha = 0.1f))) {
+                Card(colors = CardDefaults.cardColors(containerColor = goldColor.copy(alpha = 0.15f))) {
                     Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("💡")
-                        Text("Ce remboursement sera enregistré comme une dépense.", style = MaterialTheme.typography.bodySmall, color = Color(0xFF856404))
+                        Text("Ce remboursement sera enregistré comme une dépense.", style = MaterialTheme.typography.bodySmall, color = goldColor)
                     }
                 }
                 
@@ -624,12 +643,12 @@ fun RepaymentDialog(
                 val total = interest + principal
                 
                 if (total > 0) {
-                    Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF10B981).copy(alpha = 0.15f)), shape = RoundedCornerShape(8.dp)) {
+                    Card(colors = CardDefaults.cardColors(containerColor = goldColor.copy(alpha = 0.15f)), shape = RoundedCornerShape(8.dp)) {
                         Column(Modifier.padding(12.dp)) {
-                            Text("Récapitulatif :", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
-                            Text("Intérêts: ${formatCurrency(interest)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFF1E293B))
-                            Text("Capital: ${formatCurrency(principal)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFF1E293B))
-                            Text("Total: ${formatCurrency(total)}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
+                            Text("Récapitulatif :", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = goldColor)
+                            Text("Intérêts: ${formatCurrency(interest)}", style = MaterialTheme.typography.bodySmall, color = lightGray)
+                            Text("Capital: ${formatCurrency(principal)}", style = MaterialTheme.typography.bodySmall, color = lightGray)
+                            Text("Total: ${formatCurrency(total)}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = goldColor)
                         }
                     }
                 }
@@ -644,13 +663,13 @@ fun RepaymentDialog(
                 },
                 enabled = (interestAmount.toDoubleOrNull() ?: 0.0) + (principalAmount.toDoubleOrNull() ?: 0.0) > 0,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF10B981),
-                    contentColor = Color.White
+                    containerColor = goldColor,
+                    contentColor = Color.Black
                 ),
                 shape = RoundedCornerShape(8.dp)
-            ) { Text("Confirmer") }
+            ) { Text("Confirmer", fontWeight = FontWeight.Bold) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler", color = Color(0xFF64748B)) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler", color = lightGray) } }
     )
 }
 
@@ -661,27 +680,34 @@ fun AddLoanDialog(onDismiss: () -> Unit, onConfirm: (Loan) -> Unit) {
     var interestRate by remember { mutableStateOf("0") }
     var termMonths by remember { mutableStateOf("") }
     
-    // Couleurs pour les champs de texte
+    // Couleurs du thème sombre
+    val darkBackground = Color(0xFF2A2A2A)
+    val mediumGray = Color(0xFF3A3A3A)
+    val lightGray = Color(0xFFCCCCCC)
+    val goldColor = Color(0xFFD4AF37)
+    
+    // Couleurs pour les champs de texte - thème sombre
     val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = Color(0xFF1E293B),
-        unfocusedTextColor = Color(0xFF1E293B),
-        cursorColor = Color(0xFF10B981),
-        focusedBorderColor = Color(0xFF10B981),
-        unfocusedBorderColor = Color(0xFFCBD5E1),
-        focusedLabelColor = Color(0xFF10B981),
-        unfocusedLabelColor = Color(0xFF64748B),
-        focusedContainerColor = Color.White,
-        unfocusedContainerColor = Color.White
+        focusedTextColor = Color.White,
+        unfocusedTextColor = lightGray,
+        cursorColor = goldColor,
+        focusedBorderColor = goldColor,
+        unfocusedBorderColor = mediumGray,
+        focusedLabelColor = goldColor,
+        unfocusedLabelColor = lightGray,
+        focusedContainerColor = mediumGray,
+        unfocusedContainerColor = mediumGray
     )
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Color.White,
-        titleContentColor = Color(0xFF1E293B),
+        containerColor = darkBackground,
+        titleContentColor = Color.White,
         title = { 
             Text(
                 "Nouveau prêt",
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = goldColor
             ) 
         },
         text = {
@@ -740,12 +766,12 @@ fun AddLoanDialog(onDismiss: () -> Unit, onConfirm: (Loan) -> Unit) {
                 },
                 enabled = principal.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF10B981),
-                    contentColor = Color.White
+                    containerColor = goldColor,
+                    contentColor = Color.Black
                 ),
                 shape = RoundedCornerShape(8.dp)
-            ) { Text("Créer") }
+            ) { Text("Créer", fontWeight = FontWeight.Bold) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler", color = Color(0xFF64748B)) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler", color = lightGray) } }
     )
 }

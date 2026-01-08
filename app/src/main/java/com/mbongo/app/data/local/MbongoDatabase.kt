@@ -20,7 +20,7 @@ import javax.inject.Provider
         Loan::class,
         Repayment::class
     ],
-    version = 2,
+    version = 4,
     exportSchema = false
 )
 abstract class MbongoDatabase : RoomDatabase() {
@@ -39,6 +39,24 @@ abstract class MbongoDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE incomes ADD COLUMN type TEXT NOT NULL DEFAULT 'other'")
             }
         }
+        
+        // Migration de la version 2 à 3: ajout des colonnes de synchronisation
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Ajouter les colonnes de synchronisation à la table incomes
+                db.execSQL("ALTER TABLE incomes ADD COLUMN isSynced INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE incomes ADD COLUMN remoteId INTEGER DEFAULT NULL")
+                db.execSQL("ALTER TABLE incomes ADD COLUMN pendingDelete INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+        
+        // Migration de la version 3 à 4: mise à jour des catégories (ajout de nouvelles catégories)
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Cette migration ne change pas le schéma, juste les données
+                // Les nouvelles catégories seront ajoutées au prochain onCreate ou manuellement
+            }
+        }
     }
 
     class Callback(
@@ -53,19 +71,52 @@ abstract class MbongoDatabase : RoomDatabase() {
         }
 
         private suspend fun populateDatabase(categoryDao: CategoryDao) {
-            // Catégories de dépenses
+            // Catégories de dépenses (complètes comme l'application web)
             val expenseCategories = listOf(
                 Category(name = "Alimentation", type = "expense", icon = "🍔"),
-                Category(name = "Transport", type = "expense", icon = "🚗"),
+                Category(name = "Assurance vie", type = "expense", icon = "🛡️"),
+                Category(name = "Assurance véhicule", type = "expense", icon = "🚙"),
+                Category(name = "Autres", type = "expense", icon = "📦"),
+                Category(name = "Cadeaux", type = "expense", icon = "🎁"),
+                Category(name = "Carburant", type = "expense", icon = "⛽"),
+                Category(name = "Chaussures", type = "expense", icon = "👞"),
+                Category(name = "Cinéma/Spectacles", type = "expense", icon = "🎬"),
+                Category(name = "Coiffure/Esthétique", type = "expense", icon = "💇"),
+                Category(name = "Consultation médicale", type = "expense", icon = "🏥"),
+                Category(name = "Crédit/Emprunt", type = "expense", icon = "🏦"),
+                Category(name = "Cérémonies", type = "expense", icon = "🎊"),
+                Category(name = "Déjeuner bureau", type = "expense", icon = "🥪"),
+                Category(name = "Eau", type = "expense", icon = "💧"),
+                Category(name = "Frais professionnels", type = "expense", icon = "💼"),
+                Category(name = "Gaz", type = "expense", icon = "🔥"),
+                Category(name = "Internet/Data", type = "expense", icon = "📶"),
+                Category(name = "Investissement", type = "expense", icon = "📈"),
+                Category(name = "Livres/Journaux", type = "expense", icon = "📰"),
                 Category(name = "Logement", type = "expense", icon = "🏠"),
-                Category(name = "Santé", type = "expense", icon = "⚕️"),
-                Category(name = "Éducation", type = "expense", icon = "📚"),
                 Category(name = "Loisirs", type = "expense", icon = "🎮"),
+                Category(name = "Marché/Courses", type = "expense", icon = "🛒"),
+                Category(name = "Médicaments", type = "expense", icon = "💊"),
+                Category(name = "Parking/Péage", type = "expense", icon = "🅿️"),
+                Category(name = "Partage/Aide famille", type = "expense", icon = "🤝"),
+                Category(name = "Pharmacie", type = "expense", icon = "💉"),
+                Category(name = "Poubelle/Assainissement", type = "expense", icon = "🗑️"),
+                Category(name = "Produits beauté", type = "expense", icon = "💄"),
+                Category(name = "Remboursement de prêt", type = "expense", icon = "💳"),
+                Category(name = "Restaurant/Maquis", type = "expense", icon = "🍽️"),
+                Category(name = "Réparation auto", type = "expense", icon = "🔩"),
+                Category(name = "Santé", type = "expense", icon = "💊"),
+                Category(name = "Shopping", type = "expense", icon = "🛍️"),
+                Category(name = "Sport/Gym", type = "expense", icon = "⚽"),
+                Category(name = "Transport", type = "expense", icon = "🚗"),
+                Category(name = "Transport travail", type = "expense", icon = "🚌"),
+                Category(name = "Téléphone/Internet", type = "expense", icon = "📱"),
+                Category(name = "Urgences/Imprévus", type = "expense", icon = "🚨"),
+                Category(name = "Vidange", type = "expense", icon = "🔧"),
+                Category(name = "Voyage/Vacances", type = "expense", icon = "✈️"),
                 Category(name = "Vêtements", type = "expense", icon = "👕"),
-                Category(name = "Électricité", type = "expense", icon = "💡"),
-                Category(name = "Internet", type = "expense", icon = "🌐"),
-                Category(name = "Téléphone", type = "expense", icon = "📱"),
-                Category(name = "Autres", type = "expense", icon = "📦")
+                Category(name = "Éducation", type = "expense", icon = "📚"),
+                Category(name = "Électricité", type = "expense", icon = "⚡"),
+                Category(name = "Épargne", type = "expense", icon = "💰")
             )
 
             // Catégories de revenus

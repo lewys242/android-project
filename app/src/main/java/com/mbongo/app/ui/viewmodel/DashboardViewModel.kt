@@ -31,9 +31,16 @@ data class DashboardUiState(
     val previousMonthIncome: Double = 0.0,
     val previousMonthExpenses: Double = 0.0,
     val previousMonthBalance: Double = 0.0,
+    val previousMonthHasSalary: Boolean = false,
     val isLoading: Boolean = true,
     val error: String? = null,
-    val useRemote: Boolean = true // Utiliser l'API distante par défaut
+    val useRemote: Boolean = false, // Utiliser les données locales par défaut (offline-first)
+    val savingsRate: Int = 10, // Taux d'épargne: 5% ou 10%
+    val savingsEnabled: Boolean = true, // Épargne activée par défaut
+    val showBalance: Boolean = true, // Afficher/masquer le solde (comme web)
+    val showAdvice: Boolean = false, // Afficher les conseils
+    val showPreviousMonth: Boolean = false, // Afficher récap mois précédent
+    val transactionCount: Int = 0 // Nombre de transactions
 )
 
 @HiltViewModel
@@ -212,7 +219,9 @@ class DashboardViewModel @Inject constructor(
             
             val totalLoans = loans ?: 0.0
             val balance = monthlyIncome - monthlyExpenses
-            val savings = balance.coerceAtLeast(0.0)
+            // L'épargne est calculée sur le pourcentage du revenu, pas le solde
+            val currentRate = _uiState.value.savingsRate
+            val savings = monthlyIncome * (currentRate / 100.0)
             
             // Calculer le pourcentage d'utilisation
             val usagePercent = if (monthlyIncome > 0) {
@@ -237,19 +246,33 @@ class DashboardViewModel @Inject constructor(
                 usagePercent = usagePercent,
                 managementLevel = managementLevel,
                 isLoading = false,
-                useRemote = false
+                useRemote = false,
+                savingsRate = currentRate,
+                savingsEnabled = _uiState.value.savingsEnabled
             )
         }.collect { state ->
             // Vérifier si salaire existe et charger mois précédent
             val hasSalary = incomeRepository.hasSalaryForMonth(month)
             val prevIncome = incomeRepository.getTotalIncomeByMonth(previousMonth)
             val prevExpenses = expenseRepository.getTotalExpensesByMonth(previousMonth)
+            val prevHasSalary = incomeRepository.hasSalaryForMonth(previousMonth)
+            
+            // Compter les transactions (dépenses) du mois
+            val expenseCount = expenseRepository.getExpenseCountByMonth(month)
             
             _uiState.value = state.copy(
                 hasSalary = hasSalary,
                 previousMonthIncome = prevIncome,
                 previousMonthExpenses = prevExpenses,
-                previousMonthBalance = prevIncome - prevExpenses
+                previousMonthBalance = prevIncome - prevExpenses,
+                previousMonthHasSalary = prevHasSalary,
+                transactionCount = expenseCount,
+                // Calculer l'épargne basée sur le pourcentage du revenu
+                totalSavings = state.totalIncome * (_uiState.value.savingsRate / 100.0),
+                // Conserver les préférences d'affichage
+                showBalance = _uiState.value.showBalance,
+                showAdvice = _uiState.value.showAdvice,
+                showPreviousMonth = _uiState.value.showPreviousMonth
             )
         }
     }
@@ -261,6 +284,67 @@ class DashboardViewModel @Inject constructor(
     fun toggleDataSource() {
         _uiState.value = _uiState.value.copy(useRemote = !_uiState.value.useRemote)
         loadDashboardData()
+    }
+    
+    fun setSavingsRate(rate: Int) {
+        _uiState.value = _uiState.value.copy(
+            savingsRate = rate,
+            totalSavings = _uiState.value.totalIncome * (rate / 100.0)
+        )
+    }
+    
+    fun setSavingsEnabled(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(savingsEnabled = enabled)
+    }
+    
+    fun saveNow() {
+        // TODO: Enregistrer l'épargne comme une transaction
+        viewModelScope.launch {
+            val savingsAmount = _uiState.value.totalIncome * (_uiState.value.savingsRate / 100.0)
+            // Pour l'instant, on pourrait créer une dépense "Épargne" ou une entité Savings
+            Log.d("DashboardViewModel", "Saving $savingsAmount FCFA")
+        }
+    }
+    
+    fun toggleBalanceVisibility() {
+        _uiState.value = _uiState.value.copy(showBalance = !_uiState.value.showBalance)
+    }
+    
+    fun toggleAdvice() {
+        _uiState.value = _uiState.value.copy(showAdvice = !_uiState.value.showAdvice)
+    }
+    
+    fun togglePreviousMonth() {
+        _uiState.value = _uiState.value.copy(showPreviousMonth = !_uiState.value.showPreviousMonth)
+    }
+    
+    // Obtenir les conseils selon le niveau de gestion (comme dans le web)
+    fun getManagementAdvice(): List<String> {
+        return when (_uiState.value.managementLevel) {
+            ManagementLevel.BAD -> listOf(
+                "Identifiez les dépenses non essentielles à réduire",
+                "Reportez les achats non urgents au mois prochain",
+                "Cherchez des sources de revenus complémentaires"
+            )
+            ManagementLevel.WARNING -> listOf(
+                "Surveillez vos postes de dépenses cette fin de mois",
+                "Évitez les achats impulsifs",
+                "Gardez une marge pour les imprévus"
+            )
+            ManagementLevel.GOOD -> listOf(
+                "Continuez ainsi ! Pensez à épargner le surplus",
+                "Profitez-en pour constituer un fond d'urgence",
+                "Vous pouvez vous faire un petit plaisir raisonnable 🎁"
+            )
+        }
+    }
+    
+    fun getManagementTitle(): String {
+        return when (_uiState.value.managementLevel) {
+            ManagementLevel.BAD -> "🚨 Vous dépensez plus que vous gagnez !"
+            ManagementLevel.WARNING -> "⚡ Vous approchez de votre limite"
+            ManagementLevel.GOOD -> "🎉 Excellent ! Vous gérez bien votre budget"
+        }
     }
 }
 

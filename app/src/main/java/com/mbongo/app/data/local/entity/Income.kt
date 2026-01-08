@@ -12,5 +12,8 @@ data class Income(
     val month: String, // Format: yyyy-MM
     val date: String?, // Format: yyyy-MM-dd
     val type: String = "other", // "salary" ou "other"
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val isSynced: Boolean = false, // Flag pour la synchronisation
+    val remoteId: Long? = null, // ID sur le serveur distant
+    val pendingDelete: Boolean = false // Marqué pour suppression sur le serveur
 )
